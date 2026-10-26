@@ -66,12 +66,12 @@
       <label>Clé AllDebrid
         <input type="text" name="adKey" spellcheck="false" autocomplete="off" />
       </label>
-      <button class="btn" type="button" data-check="alldebrid">Vérifier</button>
+      <button class="btn" type="button" data-check="alldebrid" data-field="adKey">Vérifier</button>
       <p class="form-hint">Sur <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>.</p>
       <label>Clé TorBox
         <input type="text" name="tbKey" spellcheck="false" autocomplete="off" />
       </label>
-      <button class="btn" type="button" data-check="torbox">Vérifier</button>
+      <button class="btn" type="button" data-check="torbox" data-field="tbKey">Vérifier</button>
       <p class="form-hint">Sur <a href="https://torbox.app/settings" target="_blank" rel="noopener">torbox.app/settings</a>, rubrique « API Key ».</p>
       <p class="form-hint">Remplis au moins une des deux. Si tu as les deux, AllDebrid passe en premier et TorBox sert de secours.</p>
 
@@ -142,7 +142,9 @@
     let installed = [];
 
     document.getElementById('trackers').innerHTML = TRACKERS.map(([id, name]) =>
-      `<label>Clé API ${name}<input type="text" name="trk_${id}" spellcheck="false" autocomplete="off" /></label>`).join('');
+      `<label>Clé API ${name}<input type="text" name="trk_${id}" spellcheck="false" autocomplete="off" /></label>` +
+      // NekoBT : personne ne sait vérifier ses clés
+      (id === 'nekobt' ? '' : `<button class="btn" type="button" data-check="${id}" data-field="trk_${id}">Vérifier</button><p class="form-hint"></p>`)).join('');
 
     const line = (text, state) => {
       const li = document.createElement('li');
@@ -170,13 +172,13 @@
       const hint = b.nextElementSibling;
       const help = hint.innerHTML;
       b.addEventListener('click', async () => {
-        const key = form[b.dataset.check === 'torbox' ? 'tbKey' : 'adKey'].value.trim();
+        const key = form[b.dataset.field].value.trim();
         if (!key) return void (hint.textContent = '✗ Colle d’abord ta clé.');
         b.disabled = true;
         try {
-          const { error } = await postJson('/api/verifier', { service: b.dataset.check, key });
-          hint.textContent = error ? `✗ ${error}` : '✓ Clé acceptée.';
-          hint.style.color = error ? 'var(--accent)' : 'var(--accent-2)';
+          const { error, note } = await postJson('/api/verifier', { service: b.dataset.check, key });
+          hint.textContent = error ? `✗ ${error}` : note ? `? ${note}` : '✓ Clé acceptée.';
+          hint.style.color = error ? 'var(--accent)' : note ? '' : 'var(--accent-2)';
         } catch (err) {
           hint.textContent = `✗ ${err.message}`;
           hint.style.color = 'var(--accent)';

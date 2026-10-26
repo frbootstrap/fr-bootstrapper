@@ -49,3 +49,11 @@ test('jeton TMDB invalide refusé', () => {
   assert.strictEqual(tmdbKeys('nimporte-quoi'), null);
   assert.strictEqual(tmdbKeys(TMDB).key, 'a'.repeat(32));
 });
+
+test('vérif tracker : valide, refusée, ou vérificateur en panne', async () => {
+  const { checkTracker } = require('../lib/addons');
+  const reply = (status) => { global.fetch = async (url) => ({ json: async () => (String(url).includes('csrf') ? { token: 't' } : { status }) }); };
+  reply('valid'); assert.deepStrictEqual(await checkTracker('tr4ker', 'KEY12345'), {});
+  reply('invalid'); assert(await checkTracker('tr4ker', 'KEY12345').then((r) => r.error));
+  reply('unknown'); assert(await checkTracker('tr4ker', 'KEY12345').then((r) => r.note));
+});
