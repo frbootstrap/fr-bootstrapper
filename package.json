@@ -1,0 +1,8 @@
+{
+  "name": "fr-bootstrapper",
+  "private": true,
+  "description": "Installe d'un coup des addons francophones sur Stremio ou Nuvio",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test" }
+}

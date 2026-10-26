@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FR Bootstrapper</title>
+  <meta name="description" content="Installe d’un coup une sélection d’addons francophones sur ton compte Stremio ou Nuvio." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">🎬</span>
+      <div>
+        <h1>FR Bootstrapper</h1>
+        <p class="tagline">Installe d’un coup des addons francophones sur Stremio ou Nuvio</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="form-page">
+    <div class="howto">
+      <h2>Comment ça marche</h2>
+      <ol>
+        <li>Choisis ton appli et connecte-toi avec ton compte Stremio ou Nuvio.</li>
+        <li>Colle ta clé AllDebrid ou TorBox (ou les deux) : les addons s’en servent pour lire les vidéos.</li>
+        <li>Facultatif : ajoute une clé TMDB et tes clés de trackers pour avoir plus d’addons.</li>
+        <li>Clique sur « Installer » : les addons arrivent sur ton compte, sur tous tes appareils.</li>
+      </ol>
+      <p class="form-hint" style="margin:14px 0 0;">Ton mot de passe Stremio ou Nuvio part directement de ton navigateur vers Stremio ou Nuvio. Tes clés (debrid, TMDB, trackers) servent à fabriquer tes liens d’addons puis sont oubliées : rien n’est enregistré, aucune statistique. Le code est public.</p>
+      <details class="help">
+        <summary>Besoin d’aide ?</summary>
+        <h3>Où trouver ma clé debrid ?</h3>
+        <p>AllDebrid : <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>, copie une clé de la liste (ou crée-en une). TorBox : <a href="https://torbox.app/settings" target="_blank" rel="noopener">torbox.app/settings</a>, rubrique « API Key ». Copie-la en entier, sans espace.</p>
+        <h3>Pourquoi certains addons ne sont pas installés ?</h3>
+        <p>On n’installe que ce qui marchera avec tes clés. Sans clé TMDB, pas de WaCustom ni de Frenchio. Sans clé de tracker, pas de Frenchio ni de Stream-Fusion. Tous les autres marchent avec ta seule clé debrid.</p>
+        <h3>Comment savoir si ça a marché ?</h3>
+        <p>La dernière ligne dit « Terminé : … addons installés ». Relance ton appli, puis clique sur « Tester mes addons » : chaque addon cherche un film connu et affiche le nombre de liens trouvés.</p>
+        <h3>Un addon affiche ✗ ?</h3>
+        <p>Un ✗ isolé n’est pas grave : cet addon est en panne ou n’a pas ce film, les autres prennent le relais. Si tout est en ✗, vérifie que ton abonnement debrid est actif.</p>
+      </details>
+    </div>
+
+    <form class="panel form" id="install-form" novalidate>
+      <fieldset class="choice">
+        <legend>Ton appli</legend>
+        <label class="chip-radio"><input type="radio" name="platform" value="stremio" checked /> Stremio</label>
+        <label class="chip-radio"><input type="radio" name="platform" value="nuvio" /> Nuvio</label>
+      </fieldset>
+
+      <label>Email du compte
+        <input type="email" name="email" autocomplete="username" placeholder="toi@exemple.com" />
+      </label>
+      <label>Mot de passe du compte
+        <input type="password" name="password" autocomplete="current-password" />
+      </label>
+      <details class="stremio-only">
+        <summary>Compte créé avec Google ou Facebook ?</summary>
+        <label>Ta clé de connexion Stremio (authKey)
+          <input type="text" name="authKey" spellcheck="false" placeholder="à la place de l’email et du mot de passe" />
+        </label>
+        <p class="form-hint">Sur <a href="https://web.stremio.com" target="_blank" rel="noopener">web.stremio.com</a>, connecte-toi, appuie sur F12, onglet Console, tape <code>JSON.parse(localStorage.getItem("profile")).auth.key</code> puis Entrée, et copie le résultat.</p>
+      </details>
+
+      <label>Clé AllDebrid
+        <input type="text" name="adKey" spellcheck="false" autocomplete="off" />
+      </label>
+      <button class="btn" type="button" data-check="alldebrid">Vérifier</button>
+      <p class="form-hint">Sur <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>.</p>
+      <label>Clé TorBox
+        <input type="text" name="tbKey" spellcheck="false" autocomplete="off" />
+      </label>
+      <button class="btn" type="button" data-check="torbox">Vérifier</button>
+      <p class="form-hint">Sur <a href="https://torbox.app/settings" target="_blank" rel="noopener">torbox.app/settings</a>, rubrique « API Key ».</p>
+      <p class="form-hint">Remplis au moins une des deux. Si tu as les deux, AllDebrid passe en premier et TorBox sert de secours.</p>
+
+      <details>
+        <summary>Plus d’addons : clé TMDB (gratuite, facultative)</summary>
+        <label>Jeton d’accès en lecture TMDB
+          <input type="text" name="tmdb" spellcheck="false" autocomplete="off" placeholder="eyJhbGciOi…" />
+        </label>
+        <p class="form-hint">Ajoute WaCustom (téléchargements directs 1fichier) et permet Frenchio. Crée un compte gratuit sur <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a>, puis va sur <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a>, demande une clé (usage personnel) et copie le long « jeton d’accès en lecture de l’API » (il commence par eyJ).</p>
+      </details>
+
+      <details>
+        <summary>Plus d’addons : tes comptes de trackers (facultatif)</summary>
+        <p class="form-hint">Colle seulement les clés API des trackers où tu as un compte. Chaque clé est donnée à tous les addons qui savent s’en servir : Frenchio (avec une clé TMDB), Stream-Fusion et UwU.</p>
+        <div id="trackers"></div>
+      </details>
+
+      <details>
+        <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion ?</summary>
+        <p class="form-hint">Colle ton lien d’installation (il finit par /manifest.json). Sinon, laisse vide : on te les configure automatiquement.</p>
+        <label>Lumio <input type="url" name="mine_lumio" spellcheck="false" placeholder="https://…/manifest.json" /></label>
+        <label>WaCustom <input type="url" name="mine_wacustom" spellcheck="false" placeholder="https://…/manifest.json" /></label>
+        <label>Stream-Fusion <input type="url" name="mine_streamfusion" spellcheck="false" placeholder="https://…/manifest.json" /></label>
+      </details>
+
+      <fieldset class="choice">
+        <legend>Fiches et catalogues</legend>
+        <label class="chip-radio"><input type="radio" name="meta" value="tmdb" checked /> En français (TMDB), puis Cinemeta</label>
+        <label class="chip-radio"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul</label>
+      </fieldset>
+      <p class="form-hint">TMDB affiche les titres et résumés en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll.</p>
+
+      <label class="check">
+        <input type="checkbox" name="keep" />
+        Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)
+      </label>
+
+      <button class="btn btn-primary" type="submit" id="install-btn">Installer les addons</button>
+      <ul class="install-log" id="install-log" aria-live="polite"></ul>
+      <div class="form-warning" id="accounts" hidden></div>
+      <button class="btn" type="button" id="test-btn" hidden>Tester mes addons</button>
+    </form>
+  </main>
+
+  <footer>Cette page n’héberge aucun contenu : elle configure des addons tiers sur ton propre compte. Code public, aucune donnée gardée.</footer>
+
+  <script>
+  (() => {
+    const STREMIO_API = 'https://api.strem.io/api';
+    const NUVIO_API = 'https://api.nuvio.tv';
+    // TMDB en français + 8 plateformes + affiches RPDB (clé gratuite publique) ; même lien pour tous, fait sur tmdb.creepso.com
+    const TMDB_FR = 'https://tmdb.creepso.com/N4IgTgDgJgRg1gUwJ4gFwgC4AYC0AzMBBHSWHGAGwHsBjOAZxABoQKBDAOwHMBXNrhGhAEcAMQBKzEPQyE2AWwCW3NAG0QHPAA8pCiFKgd9LGtF0ZjIABYx5UiPMs0wPEAF0TbDG2pdGqVVBFKCEMeVgAOnYMBBkpDCQIQXR5KgA3RUEWDgVkkAAZL1iMAAJxBAoENnpYqXorKgB3AEkOAAkqeWTZHgQAXyYgkPQwyOji+MS8mrBMxmzcoUKYmTKKqpr56QaW9s7ul37BkGDQ8JgI2QQOKGUuSaShVIysjUX0ABVCG7u6ndaOl00D0jkMzpErj8VCwEo90DM5lIckDPt9btDtk0AftgYcBmCRudLlRLLC8s9Mkj3iAAAoknjsMB-LF7FEg-EnYaYIkYEkPaYIWa1BYo2n0xnM3aAg69DmnQmRJBVJkwqZPdKUkV5ACaysl2LZeOO8u5ir1qrh0kFiK1Ql1bBVmKlONQ7ONXNGF3Y3D4An56peVNFhR9-Fe9RZ0txsvd4K9nF4Yf98OtwrewYTvvD-1ZMtBnKEMjkSm4EU0Ogt5I1r2ReQAcggMHgKIoK06DXm5Vyi1US1wy9pk1ahVta0IG02W22I87DTGCdIrgo7hE9EOKTXqTTZl0SgA1YIIKj63PR-MmnvL0tryuF1Ojrc7hD7w-HlgzjtnruFpd9iKGUk1RSasgzyAARRR6A4ZAAGoTyjV0jQXS8-wAocETTMd0AgqDYPgl03WQ38V1MEJb2AwNbXQABhTgfDg98cwQwiC3hYjS1I9D71AoRaJyCgGPbU9EPnVjF2LFcvEAy0Nx49AAEEIAgSoSg+PdBI-YSWIvdj+ykriRzkkBFOU581I0piCKQsSUJXGw7HIkBZKokA2gAIQAeRKABZNhp0sudz27XSInsgybXTPJ3K83z-MjKzRJ0iTSwcaSq0oyKhBpB0FCoHgOAwCz4sC782OS-tUvCzCtxy1J8sK-CStjMrexIlx1xAlzqJcDgaCsJAwCoCgKEaztmvE1qOPaxyMIfUVuvyvqBqGkbGOKzs3D6IA/manifest.json';
+    // TMDB Collections (sagas de films) en français ; placé juste après TMDB
+    const TMDB_COLLECTIONS = 'https://61ab9c85a149-tmdb-collections.baby-beamup.club/%7B%22enableAdultContent%22%3Afalse%2C%22enableSearch%22%3Atrue%2C%22enableCollectionFromMovie%22%3Atrue%2C%22language%22%3A%22fr%22%2C%22catalogList%22%3A%5B%22popular%22%2C%22newReleases%22%2C%22topRated%22%2C%22topRatedByCountry%22%2C%22topRatedByCompany%22%5D%2C%22discoverOnly%22%3A%7B%22popular%22%3Atrue%2C%22newReleases%22%3Afalse%2C%22topRated%22%3Atrue%2C%22topRatedByCountry%22%3Atrue%2C%22topRatedByCompany%22%3Atrue%7D%7D/manifest.json';
+    // Clé publique « anon » de l'appli Nuvio (présente dans chaque copie de l'appli) ; à reprendre si Nuvio la change
+    const NUVIO_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNTIxMzQ2LCJleHAiOjE5MzkyMDEzNDZ9.tmQaj682pwzehpqlgCDMnySOqiUvpgRbrE43T4VJpDI';
+    // Trackers proposés (même liste que lib/addons.js) : [champ, nom affiché]
+    const TRACKERS = [['tr4ker', 'tr4ker'], ['c411', 'C411'], ['yggreborn', 'YggReborn'], ['nekobt', 'NekoBT'], ['torr9', 'Torr9'],
+      ['abn', 'ABN'], ['generationfree', 'Generation Free'], ['g3mini', 'G3MINI'], ['theoldschool', 'TheOldSchool'], ['nostradamus', 'Nostradamus']];
+
+    const form = document.getElementById('install-form');
+    const btn = document.getElementById('install-btn');
+    const log = document.getElementById('install-log');
+    const accounts = document.getElementById('accounts');
+    const testBtn = document.getElementById('test-btn');
+    // Film très connu, présent partout : s'il ne donne rien, c'est l'addon qui coince
+    const TEST_FILM = { id: 'tt0816692', title: 'Interstellar' };
+    let installed = [];
+
+    document.getElementById('trackers').innerHTML = TRACKERS.map(([id, name]) =>
+      `<label>Clé API ${name}<input type="text" name="trk_${id}" spellcheck="false" autocomplete="off" /></label>`).join('');
+
+    const line = (text, state) => {
+      const li = document.createElement('li');
+      li.className = state || '';
+      li.textContent = text;
+      log.appendChild(li);
+      return li;
+    };
+
+    form.platform.forEach((r) => r.addEventListener('change', () => {
+      document.querySelector('.stremio-only').hidden = form.platform.value !== 'stremio';
+    }));
+
+    async function postJson(url, body, headers = {}) {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
+      const text = await r.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { /* page d'erreur HTML */ }
+      if (!r.ok) throw new Error((data && (data.msg || data.message || data.error)) || `erreur ${r.status}`);
+      return data;
+    }
+
+    // Le bouton « Vérifier » écrit son verdict dans le texte d'aide juste dessous
+    document.querySelectorAll('[data-check]').forEach((b) => {
+      const hint = b.nextElementSibling;
+      const help = hint.innerHTML;
+      b.addEventListener('click', async () => {
+        const key = form[b.dataset.check === 'torbox' ? 'tbKey' : 'adKey'].value.trim();
+        if (!key) return void (hint.textContent = '✗ Colle d’abord ta clé.');
+        b.disabled = true;
+        try {
+          const { error } = await postJson('/api/verifier', { service: b.dataset.check, key });
+          hint.textContent = error ? `✗ ${error}` : '✓ Clé acceptée.';
+          hint.style.color = error ? 'var(--accent)' : 'var(--accent-2)';
+        } catch (err) {
+          hint.textContent = `✗ ${err.message}`;
+          hint.style.color = 'var(--accent)';
+        }
+        b.disabled = false;
+        setTimeout(() => { hint.innerHTML = help; hint.style.color = ''; }, 8000);
+      });
+    });
+
+    const stremio = {
+      async login(email, password, authKey) {
+        if (authKey) return authKey;
+        const d = await postJson(`${STREMIO_API}/login`, { type: 'Login', email, password });
+        if (!d?.result?.authKey) throw new Error(d?.error?.message || 'email ou mot de passe refusé');
+        return d.result.authKey;
+      },
+      async get(authKey) {
+        const d = await postJson(`${STREMIO_API}/addonCollectionGet`, { type: 'AddonCollectionGet', authKey, update: true });
+        return d?.result?.addons || [];
+      },
+      async set(authKey, addons) {
+        const d = await postJson(`${STREMIO_API}/addonCollectionSet`, { type: 'AddonCollectionSet', authKey, addons });
+        if (d?.error) throw new Error(d.error.message || 'refusé par Stremio');
+      },
+    };
+
+    const nuvio = {
+      async login(email, password) {
+        const d = await postJson(`${NUVIO_API}/auth/v1/token?grant_type=password`, { email, password }, { apikey: NUVIO_ANON });
+        if (!d?.access_token) throw new Error('email ou mot de passe refusé');
+        return d.access_token;
+      },
+      headers: (token) => ({ apikey: NUVIO_ANON, Authorization: `Bearer ${token}` }),
+      async get(token) {
+        const r = await fetch(`${NUVIO_API}/rest/v1/addons?select=*&profile_id=eq.1&order=sort_order`, { headers: nuvio.headers(token) });
+        if (!r.ok) throw new Error(`lecture des addons refusée (${r.status})`);
+        return (await r.json()).map((a) => ({ transportUrl: a.url, manifest: { name: a.name } }));
+      },
+      async set(token, addons) {
+        await postJson(`${NUVIO_API}/rest/v1/rpc/sync_push_addons`, {
+          p_profile_id: 1,
+          p_addons: addons.map((a, i) => ({ url: a.transportUrl, name: a.manifest?.name || 'Addon', enabled: true, sort_order: i })),
+        }, nuvio.headers(token));
+      },
+    };
+
+    // Identifiants des comptes créés chez WaCustom / Stream-Fusion : affichés une seule fois
+    function showAccounts(addons) {
+      const made = addons.filter((a) => a.account);
+      accounts.hidden = !made.length;
+      accounts.replaceChildren();
+      if (!made.length) return;
+      const intro = document.createElement('p');
+      intro.style.margin = '0 0 8px';
+      intro.textContent = 'Comptes créés pour toi : note ces identifiants maintenant si tu veux modifier ces addons plus tard sur leur site. On ne pourra pas te les redonner (en repassant ici, tu en auras simplement de nouveaux).';
+      accounts.append(intro);
+      for (const a of made) {
+        const p = document.createElement('p');
+        p.style.margin = '4px 0';
+        p.append(`${a.name} — identifiant : `);
+        const id = Object.assign(document.createElement('span'), { className: 'secret', textContent: a.account.id || '?' });
+        const pw = Object.assign(document.createElement('span'), { className: 'secret', textContent: a.account.password });
+        p.append(id, ' — mot de passe : ', pw);
+        accounts.append(p);
+      }
+    }
+
+    testBtn.addEventListener('click', async () => {
+      testBtn.disabled = true;
+      testBtn.textContent = 'Test en cours…';
+      line(`Test : chaque addon cherche « ${TEST_FILM.title} » (jusqu’à une minute)…`);
+      // TMDB et Cinemeta ne donnent que des fiches, pas de liens : on ne les teste pas
+      const withStreams = installed.filter((a) => (a.manifest.resources || []).some((r) => (r.name || r) === 'stream'));
+      const found = await Promise.all(withStreams.map(async (a) => {
+        const name = a.manifest.name || 'Addon';
+        const li = line(`${name} : recherche…`);
+        try {
+          const r = await fetch(a.transportUrl.replace(/\/manifest\.json$/, `/stream/movie/${TEST_FILM.id}.json`), { signal: AbortSignal.timeout(60000) });
+          if (!r.ok) throw new Error(`erreur ${r.status}`);
+          const n = ((await r.json()).streams || []).length;
+          li.textContent = n ? `${name} : ${n} lien${n > 1 ? 's' : ''}` : `${name} : aucun lien pour ce film`;
+          li.className = n ? 'ok' : 'ko';
+          return n > 0;
+        } catch (err) {
+          li.textContent = `${name} : ne répond pas (${err.name === 'TimeoutError' ? 'trop lent' : err.message})`;
+          li.className = 'ko';
+          return false;
+        }
+      }));
+      const ok = found.filter(Boolean).length;
+      line(ok === found.length
+        ? `Tout marche : ${ok} addon${ok > 1 ? 's' : ''} sur ${found.length} trouvent des liens.`
+        : `${ok} addon${ok > 1 ? 's' : ''} sur ${found.length} trouvent des liens. Un ✗ isolé n’est pas grave ; si presque tout est en ✗, vérifie ton abonnement debrid.`,
+        ok ? 'ok done' : 'ko done');
+      testBtn.disabled = false;
+      testBtn.textContent = 'Refaire le test';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      log.innerHTML = '';
+      testBtn.hidden = true;
+      accounts.hidden = true;
+      const platform = form.platform.value;
+      const api = platform === 'nuvio' ? nuvio : stremio;
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      const authKey = platform === 'stremio' ? form.authKey.value.trim() : '';
+      const adKey = form.adKey.value.trim();
+      const tbKey = form.tbKey.value.trim();
+      const tmdb = form.tmdb.value.trim();
+      const trackers = Object.fromEntries(TRACKERS.map(([id]) => [id, form[`trk_${id}`].value.trim()]).filter(([, v]) => v));
+      const mine = Object.fromEntries(['lumio', 'wacustom', 'streamfusion'].map((n) => [n, form[`mine_${n}`].value.trim()]).filter(([, v]) => v));
+
+      if (!authKey && (!email || !password)) return line('Il manque ton email ou ton mot de passe.', 'ko');
+      if (!adKey && !tbKey) return line('Il manque ta clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.', 'ko');
+      if (Object.values(mine).some((u) => !/^https:\/\/.+\/manifest\.json$/.test(u))) return line('Un lien « j’ai déjà un compte » doit commencer par https:// et finir par /manifest.json.', 'ko');
+
+      btn.disabled = true;
+      btn.textContent = 'Installation…';
+      try {
+        const step = line(`Connexion à ${platform === 'nuvio' ? 'Nuvio' : 'Stremio'}…`);
+        const token = await api.login(email, password, authKey);
+        step.textContent = `Connecté à ${platform === 'nuvio' ? 'Nuvio' : 'Stremio'}.`;
+        step.className = 'ok';
+
+        line('Vérification de tes clés et fabrication des liens…');
+        const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine });
+        // Nuvio n'a pas Cinemeta d'office (Stremio, si) : sans lui, pas de catalogue ni de fiches
+        if (platform === 'nuvio') links.addons.unshift({ name: 'Cinemeta', url: 'https://v3-cinemeta.strem.io/manifest.json' });
+        links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
+        if (form.meta.value === 'tmdb') links.addons.unshift({ name: 'TMDB (français)', url: TMDB_FR });
+        const fetched = await Promise.all(links.addons.map(async (a) => {
+          if (a.error) {
+            line(`${a.name} : indisponible en ce moment, sauté (${a.error})`, 'ko');
+            return null;
+          }
+          try {
+            const r = await fetch(a.url);
+            if (!r.ok) throw new Error(`erreur ${r.status}`);
+            const manifest = await r.json();
+            line(`${a.name} : prêt`, 'ok');
+            return { transportUrl: a.url, transportName: '', manifest, flags: {} };
+          } catch (err) {
+            line(`${a.name} : ne répond pas en ce moment, sauté (${err.message})`, 'ko');
+            return null;
+          }
+        }));
+        const ours = fetched.filter(Boolean);
+        if (!ours.length) throw new Error('aucun addon n’a répondu');
+
+        const current = await api.get(token);
+        // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
+        const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
+        const urls = new Set([...pinned, ...ours].map((a) => a.transportUrl));
+        const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
+        const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_COLLECTIONS;
+        await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept]);
+
+        installed = ours;
+        testBtn.hidden = false;
+        showAccounts(links.addons.filter((a) => urls.has(a.url)));
+        line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}. Relance l’appli pour les voir.`, 'ok done');
+      } catch (err) {
+        line(`Échec : ${err.message}. Vérifie tes identifiants puis réessaie.`, 'ko');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Installer les addons';
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
