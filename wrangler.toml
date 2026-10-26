@@ -1,0 +1,5 @@
+name = "fr-bootstrapper"
+pages_build_output_dir = "public"
+compatibility_date = "2026-10-01"
+# Buffer (encodage base64 des configs d'addons)
+compatibility_flags = ["nodejs_compat"]
