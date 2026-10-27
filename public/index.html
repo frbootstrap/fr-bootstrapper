@@ -137,7 +137,6 @@
         <button class="btn btn-primary btn-big" type="submit" id="install-btn">Installer les addons</button>
         <ul class="install-log" id="install-log" aria-live="polite"></ul>
         <div class="form-warning" id="accounts" hidden></div>
-        <button class="btn" type="button" id="test-btn" hidden>Tester mes addons</button>
       </section>
 
       <p class="step-error" id="step-error" role="alert"></p>
@@ -158,9 +157,9 @@
   <details class="help">
     <summary>Besoin d’aide&nbsp;?</summary>
     <h3>Comment savoir si ça a marché ?</h3>
-    <p>La dernière ligne dit « Terminé : … addons installés ». Relance ton appli, puis clique sur « Tester mes addons » : chaque addon cherche un film connu et affiche le nombre de liens trouvés.</p>
+    <p>La dernière ligne dit « Terminé : … addons installés ». Relance ton appli : les addons apparaissent sur tous tes appareils.</p>
     <h3>Un addon affiche ✗ ?</h3>
-    <p>Un ✗ isolé n’est pas grave : cet addon est en panne ou n’a pas ce film, les autres prennent le relais. Si tout est en ✗, vérifie que ton abonnement debrid est actif.</p>
+    <p>Pendant l’installation, un ✗ veut dire que cet addon ne répondait pas à ce moment-là : il est sauté, les autres sont installés quand même. Repasse plus tard pour l’ajouter.</p>
     <h3>Mes clés sont-elles gardées ?</h3>
     <p>Non. Tes clés servent à fabriquer tes liens d’addons puis sont oubliées : rien n’est enregistré, aucune statistique. Le code est public.</p>
   </details>
@@ -195,10 +194,6 @@
     const btn = document.getElementById('install-btn');
     const log = document.getElementById('install-log');
     const accounts = document.getElementById('accounts');
-    const testBtn = document.getElementById('test-btn');
-    // Film très connu, présent partout : s'il ne donne rien, c'est l'addon qui coince
-    const TEST_FILM = { id: 'tt0816692', title: 'Interstellar' };
-    let installed = [];
 
     const trackerField = ([id, name, url]) =>
       `<div class="field"><label for="trk_${id}">Clé API ${name}</label><div class="row"><input id="trk_${id}" type="text" name="trk_${id}" spellcheck="false" autocomplete="off" />` +
@@ -330,37 +325,6 @@
       }
     }
 
-    testBtn.addEventListener('click', async () => {
-      testBtn.disabled = true;
-      testBtn.textContent = 'Test en cours…';
-      line(`Test : chaque addon cherche « ${TEST_FILM.title} » (jusqu’à une minute)…`);
-      // TMDB et Cinemeta ne donnent que des fiches, pas de liens : on ne les teste pas
-      const withStreams = installed.filter((a) => (a.manifest.resources || []).some((r) => (r.name || r) === 'stream'));
-      const found = await Promise.all(withStreams.map(async (a) => {
-        const name = a.manifest.name || 'Addon';
-        const li = line(`${name} : recherche…`);
-        try {
-          const r = await fetch(a.transportUrl.replace(/\/manifest\.json$/, `/stream/movie/${TEST_FILM.id}.json`), { signal: AbortSignal.timeout(60000) });
-          if (!r.ok) throw new Error(`erreur ${r.status}`);
-          const n = ((await r.json()).streams || []).length;
-          li.textContent = n ? `${name} : ${n} lien${n > 1 ? 's' : ''}` : `${name} : aucun lien pour ce film`;
-          li.className = n ? 'ok' : 'ko';
-          return n > 0;
-        } catch (err) {
-          li.textContent = `${name} : ne répond pas (${err.name === 'TimeoutError' ? 'trop lent' : err.message})`;
-          li.className = 'ko';
-          return false;
-        }
-      }));
-      const ok = found.filter(Boolean).length;
-      line(ok === found.length
-        ? `Tout marche : ${ok} addon${ok > 1 ? 's' : ''} sur ${found.length} trouvent des liens.`
-        : `${ok} addon${ok > 1 ? 's' : ''} sur ${found.length} trouvent des liens. Un ✗ isolé n’est pas grave ; si presque tout est en ✗, vérifie ton abonnement debrid.`,
-        ok ? 'ok done' : 'ko done');
-      testBtn.disabled = false;
-      testBtn.textContent = 'Refaire le test';
-    });
-
     // Onglets libres : on va où on veut, chaque onglet montre s'il est rempli (vert) ou s'il manque l'obligatoire (rouge)
     const steps = [...form.querySelectorAll('.step')];
     const stepBtns = [...document.querySelectorAll('[data-goto]')];
@@ -450,7 +414,7 @@
       document.getElementById('total').textContent = ADDONS.length;
       document.getElementById('bar').style.transform = `scaleX(${n / ADDONS.length})`;
       const app = form.platform.value === 'nuvio' ? 'Nuvio' : 'Stremio';
-      document.getElementById('install-lead').textContent = `On installe ${n} addon${n > 1 ? 's' : ''} sur ton compte ${app}, sur tous tes appareils. Tu pourras les tester juste après.`;
+      document.getElementById('install-lead').textContent = `On installe ${n} addon${n > 1 ? 's' : ''} sur ton compte ${app}, sur tous tes appareils. Ça prend quelques secondes.`;
       if (!btn.disabled) btn.textContent = `Installer les ${n} addons`;
       nextBtn.textContent = (current === 2 || current === 3) && !filled[current]() ? 'Passer cette étape' : 'Continuer';
       paintTabs();
@@ -469,7 +433,6 @@
         return void (stepError.textContent = `${missing.join(' ')} Regarde les onglets en rouge.`);
       }
       log.innerHTML = '';
-      testBtn.hidden = true;
       accounts.hidden = true;
       const platform = form.platform.value;
       const api = platform === 'nuvio' ? nuvio : stremio;
@@ -527,8 +490,6 @@
         const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_COLLECTIONS;
         await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept]);
 
-        installed = ours;
-        testBtn.hidden = false;
         showAccounts(links.addons.filter((a) => urls.has(a.url)));
         line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}. Relance l’appli pour les voir.`, 'ok done');
       } catch (err) {
