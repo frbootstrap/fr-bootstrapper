@@ -1,0 +1,6 @@
+# Interdit d'afficher la page dans le cadre d'un autre site (piège au clic sur le formulaire de connexion)
+/*
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
