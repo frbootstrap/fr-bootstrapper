@@ -14,7 +14,7 @@ const TMDB = `x.${Buffer.from(JSON.stringify({ aud: 'a'.repeat(32) })).toString(
 
 test('debrid seul : ni Stream-Fusion, ni WaCustom', async () => {
   const n = await names({ alldebrid: 'ADKEY12345' });
-  assert.deepStrictEqual(n, ['Lumio', 'AIOSources', 'UwU-FR', 'Torrentio', 'Comet', 'TorrentsDB', 'Anime Catalogs', 'OpenSubtitles v3+', 'FKStream']);
+  assert.deepStrictEqual(n, ['Lumio', 'AIOSources', 'UwU-FR', 'Torrentio', 'Comet', 'TorrentsDB', 'Anime Catalogs', 'SubSense', 'OpenSubtitles v3+', 'FKStream']);
 });
 
 test('TMDB seul : WaCustom en plus, pas Stream-Fusion', async () => {
