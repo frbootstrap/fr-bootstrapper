@@ -14,12 +14,13 @@
       <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="5" width="28" height="22" rx="7" fill="var(--accent)"></rect><path d="M13 11.5v9l8-4.5z" fill="var(--ink)"></path></svg>
       <span>FR Bootstrapper</span>
     </div>
-    <ol class="stepper" id="stepper">
-      <li><button type="button" data-goto="0">Ton appli</button></li>
-      <li><button type="button" data-goto="1">Ta clé debrid</button></li>
-      <li><button type="button" data-goto="2">Ta clé TMDB</button></li>
-      <li><button type="button" data-goto="3">Installer</button></li>
-    </ol>
+    <nav class="tabs" id="stepper" aria-label="Étapes">
+      <button type="button" data-goto="0"><span class="tab-state" aria-hidden="true"></span>Ton appli</button>
+      <button type="button" data-goto="1"><span class="tab-state" aria-hidden="true"></span>Ta clé debrid</button>
+      <button type="button" data-goto="2"><span class="tab-state" aria-hidden="true"></span>Ta clé TMDB</button>
+      <button type="button" data-goto="3"><span class="tab-state" aria-hidden="true"></span>Tes trackers</button>
+      <button type="button" data-goto="4"><span class="tab-state" aria-hidden="true"></span>Installer</button>
+    </nav>
   </header>
 
   <main class="layout">
@@ -79,7 +80,7 @@
         <p class="lead">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
         <div class="unlocks">
           <div><strong>WaCustom</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
-          <div><strong>Frenchio</strong><span>Gros moteur de recherche FR. Il faut aussi une clé tr4ker ou C411 (plus bas).</span></div>
+          <div><strong>Frenchio</strong><span>Gros moteur de recherche FR. Il faut aussi une clé tr4ker ou C411 (onglet suivant).</span></div>
         </div>
         <div class="field">
           <label for="tmdb">Jeton d’accès en lecture TMDB</label>
@@ -97,14 +98,26 @@
             <li>Copie le « jeton d’accès en lecture de l’API », le plus long des deux (il commence par eyJ).</li>
           </ol>
         </div>
-        <details class="more">
-          <summary>Tu as des comptes sur des trackers ? (facultatif)</summary>
-          <p class="form-hint">Colle seulement les clés API des trackers où tu as un compte. Chaque clé est donnée à tous les addons qui savent s’en servir : Frenchio (avec la clé TMDB), Stream-Fusion et UwU.</p>
-          <div id="trackers" class="trackers"></div>
-        </details>
       </section>
 
       <section class="step" data-step="3" hidden>
+        <p class="kicker">Gratuit · fortement conseillé</p>
+        <h1>Tes trackers</h1>
+        <p class="lead">Un tracker, c’est un site communautaire qui répertorie des torrents, souvent en VF. Avec un compte, tu donnes aux addons accès à son catalogue : beaucoup plus de résultats en français. Inscris-toi, puis copie ta clé API ici.</p>
+        <div class="unlocks">
+          <div><strong>Frenchio</strong><span>Avec une clé tr4ker ou C411, et ta clé TMDB.</span></div>
+          <div><strong>Stream-Fusion</strong><span>Avec n’importe quelle clé, sauf NekoBT.</span></div>
+        </div>
+        <p class="form-hint">Chaque clé est aussi donnée à UwU-FR (NekoBT : animés). Mets-en autant que tu veux : plus il y en a, plus il y a de résultats.</p>
+        <h2 class="sub">Inscriptions ouvertes</h2>
+        <div id="trackers-open" class="trackers"></div>
+        <details class="more">
+          <summary>Trackers privés (sur invitation)</summary>
+          <div id="trackers-private" class="trackers"></div>
+        </details>
+      </section>
+
+      <section class="step" data-step="4" hidden>
         <h1>C’est parti</h1>
         <p class="lead" id="install-lead"></p>
         <fieldset class="choice">
@@ -165,8 +178,18 @@
     // Clé publique « anon » de l'appli Nuvio (présente dans chaque copie de l'appli) ; à reprendre si Nuvio la change
     const NUVIO_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNTIxMzQ2LCJleHAiOjE5MzkyMDEzNDZ9.tmQaj682pwzehpqlgCDMnySOqiUvpgRbrE43T4VJpDI';
     // Trackers proposés (même liste que lib/addons.js) : [champ, nom affiché]
-    const TRACKERS = [['tr4ker', 'tr4ker'], ['c411', 'C411'], ['yggreborn', 'YggReborn'], ['nekobt', 'NekoBT'], ['torr9', 'Torr9'],
-      ['abn', 'ABN'], ['generationfree', 'Generation Free'], ['g3mini', 'G3MINI'], ['theoldschool', 'TheOldSchool'], ['nostradamus', 'Nostradamus']];
+    // [id, nom, page de la clé API, inscriptions ouvertes] ; liens relevés sur la page de configuration de Stream-Fusion
+    const TRACKERS = [
+      ['tr4ker', 'tr4ker', 'https://tr4ker.net/mon-compte/parametres', true],
+      ['c411', 'C411', 'https://c411.org/user/integrations', true],
+      ['yggreborn', 'YggReborn', 'https://www.yggreborn.org/guide-api', true],
+      ['nekobt', 'NekoBT', 'https://nekobt.to', true],
+      ['abn', 'ABN', 'https://abn.lol'],
+      ['generationfree', 'Generation Free', 'https://generation-free.org'],
+      ['g3mini', 'G3MINI', 'https://gemini-tracker.org'],
+      ['theoldschool', 'TheOldSchool', 'https://theoldschool.cc'],
+      ['nostradamus', 'Nostradamus', 'https://nostradamus.foo'],
+    ];
 
     const form = document.getElementById('install-form');
     const btn = document.getElementById('install-btn');
@@ -177,11 +200,13 @@
     const TEST_FILM = { id: 'tt0816692', title: 'Interstellar' };
     let installed = [];
 
-    document.getElementById('trackers').innerHTML = TRACKERS.map(([id, name]) =>
+    const trackerField = ([id, name, url]) =>
       `<div class="field"><label for="trk_${id}">Clé API ${name}</label><div class="row"><input id="trk_${id}" type="text" name="trk_${id}" spellcheck="false" autocomplete="off" />` +
       // NekoBT : personne ne sait vérifier ses clés
       (id === 'nekobt' ? '' : `<button class="btn" type="button" data-check="${id}" data-field="trk_${id}">Vérifier</button>`) +
-      '</div><p class="form-hint"></p></div>').join('');
+      `</div><p class="form-hint"><a href="${url}" target="_blank" rel="noopener">${id === 'nekobt' ? 'nekobt.to' : `Où trouver ma clé ${name}`}</a>${id === 'nekobt' ? ' : Profil → Modifier, rubrique API.' : ''}</p></div>`;
+    document.getElementById('trackers-open').innerHTML = TRACKERS.filter((t) => t[3]).map(trackerField).join('');
+    document.getElementById('trackers-private').innerHTML = TRACKERS.filter((t) => !t[3]).map(trackerField).join('');
 
     const line = (text, state) => {
       const li = document.createElement('li');
@@ -322,23 +347,40 @@
       testBtn.textContent = 'Refaire le test';
     });
 
-    // Assistant en 4 étapes : une seule section visible, la liste de droite suit en direct
+    // Onglets libres : on va où on veut, chaque onglet montre s'il est rempli (vert) ou s'il manque l'obligatoire (rouge)
     const steps = [...form.querySelectorAll('.step')];
     const stepBtns = [...document.querySelectorAll('[data-goto]')];
     const backBtn = document.getElementById('back-btn');
     const nextBtn = document.getElementById('next-btn');
     const stepError = document.getElementById('step-error');
     let current = 0;
+    const visited = new Set();
+    const filled = [
+      () => !!form.authKey.value.trim() || (!!form.email.value.trim() && !!form.password.value),
+      () => !!(form.adKey.value.trim() || form.tbKey.value.trim()),
+      () => !!form.tmdb.value.trim(),
+      () => TRACKERS.some(([id]) => form[`trk_${id}`].value.trim()),
+    ];
 
     function stepProblem(i) {
       if (i === 0 && !form.authKey.value.trim() && (!form.email.value.trim() || !form.password.value)) return 'Il manque ton email ou ton mot de passe.';
       if (i === 1 && !form.adKey.value.trim() && !form.tbKey.value.trim()) return 'Il faut au moins une clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.';
       return '';
     }
+    function paintTabs() {
+      stepBtns.forEach((b, n) => {
+        const done = filled[n]?.();
+        // Rouge seulement pour l'obligatoire (appli, debrid), une fois qu'on est passé dessus
+        b.dataset.state = done ? 'done' : stepProblem(n) && visited.has(n) ? 'missing' : '';
+        b.toggleAttribute('aria-current', n === current);
+        b.querySelector('.tab-state').textContent = b.dataset.state === 'done' ? '✓' : b.dataset.state === 'missing' ? '!' : '';
+      });
+    }
     function show(i) {
+      if (i !== current) visited.add(current);
       current = i;
+      if (i === steps.length - 1) [0, 1].forEach((n) => visited.add(n));
       steps.forEach((s, n) => { s.hidden = n !== i; });
-      stepBtns.forEach((b, n) => { b.dataset.state = n < i ? 'done' : n === i ? 'now' : 'next'; b.disabled = n > i; });
       backBtn.hidden = i === 0;
       nextBtn.hidden = i === steps.length - 1;
       stepError.textContent = '';
@@ -348,11 +390,7 @@
       title.focus({ preventScroll: true });
       window.scrollTo({ top: 0 });
     }
-    function next() {
-      const problem = stepProblem(current);
-      if (problem) return void (stepError.textContent = problem);
-      show(current + 1);
-    }
+    const next = () => show(current + 1);
     nextBtn.addEventListener('click', next);
     backBtn.addEventListener('click', () => show(current - 1));
     stepBtns.forEach((b, n) => b.addEventListener('click', () => show(n)));
@@ -400,7 +438,8 @@
       const app = form.platform.value === 'nuvio' ? 'Nuvio' : 'Stremio';
       document.getElementById('install-lead').textContent = `On installe ${n} addon${n > 1 ? 's' : ''} sur ton compte ${app}, sur tous tes appareils. Tu pourras les tester juste après.`;
       if (!btn.disabled) btn.textContent = `Installer les ${n} addons`;
-      nextBtn.textContent = current === 2 && !form.tmdb.value.trim() ? 'Passer cette étape' : 'Continuer';
+      nextBtn.textContent = (current === 2 || current === 3) && !filled[current]() ? 'Passer cette étape' : 'Continuer';
+      paintTabs();
     }
     form.addEventListener('input', updateSummary);
     form.addEventListener('change', updateSummary);
@@ -410,6 +449,11 @@
       e.preventDefault();
       // Entrée dans un champ = étape suivante, pas installation
       if (current < steps.length - 1) return next();
+      const missing = [0, 1].map(stepProblem).filter(Boolean);
+      if (missing.length) {
+        paintTabs();
+        return void (stepError.textContent = `${missing.join(' ')} Regarde les onglets en rouge.`);
+      }
       log.innerHTML = '';
       testBtn.hidden = true;
       accounts.hidden = true;

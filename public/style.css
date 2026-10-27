@@ -54,27 +54,32 @@ code { font-size: 0.9em; background: var(--surface2); padding: 1px 6px; border-r
   gap: calc(var(--u) * 3);
 }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
-.stepper { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--u); flex: 0 1 620px; }
-.stepper button {
-  width: 100%;
+.tabs { display: flex; gap: 4px; flex: 0 1 780px; padding: 6px; border-radius: 999px; background: var(--surface); overflow-x: auto; scrollbar-width: none; }
+.tabs button {
+  flex: 1 0 auto;
   min-height: 44px;
-  padding: 0;
+  padding: 0 14px;
   border: 0;
+  border-radius: 999px;
   background: none;
   color: var(--dim);
   font: 700 14px Figtree, system-ui, sans-serif;
-  text-align: left;
+  white-space: nowrap;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: var(--u);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   cursor: pointer;
+  transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 160ms var(--ease-out);
 }
-.stepper button::before { content: ''; height: 5px; border-radius: 999px; background: var(--surface2); transition: background-color 300ms var(--ease-out); }
-.stepper button[data-state='done']::before { background: var(--ok); }
-.stepper button[data-state='now']::before { background: var(--accent); }
-.stepper button[data-state='now'], .stepper button[data-state='done'] { color: var(--text); }
-.stepper button:disabled { cursor: default; }
+.tabs button:active { transform: scale(0.97); }
+.tabs button[aria-current] { background: var(--surface2); color: var(--text); }
+.tabs button[data-state='missing'] { color: var(--danger); }
+.tab-state { display: none; width: 20px; height: 20px; border-radius: 999px; font-size: 12px; font-weight: 900; align-items: center; justify-content: center; color: var(--ink); }
+.tabs button[data-state='done'] .tab-state { display: flex; background: var(--ok); }
+.tabs button[data-state='missing'] .tab-state { display: flex; background: var(--danger); }
+@media (hover: hover) and (pointer: fine) { .tabs button:hover { color: var(--text); } }
+.sub { margin: 8px 0 -6px; font-size: 20px; font-weight: 800; }
 
 /* Carte de l'étape + liste en direct */
 .layout {
@@ -230,11 +235,11 @@ footer { max-width: 1280px; margin: 0 auto; padding: calc(var(--u) * 4) calc(var
 /* Téléphone : la liste passe sous l'étape, tout s'empile */
 @media (max-width: 900px) {
   .topbar, .layout, .help, footer { padding-left: 16px; padding-right: 16px; }
-  .stepper { flex-basis: 100%; }
+  .tabs { flex-basis: 100%; flex-wrap: wrap; border-radius: 20px; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   .summary { position: static; }
   form.card { padding: 28px 20px; min-height: 0; }
   h1 { font-size: 44px; }
   .grid2, .unlocks { grid-template-columns: minmax(0, 1fr); }
-  .stepper button { font-size: 12px; }
+  .tabs button { padding: 0 12px; font-size: 13px; }
 }
