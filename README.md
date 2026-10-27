@@ -14,4 +14,6 @@ Page qui installe d'un coup une sélection d'addons francophones sur un compte *
 - `lib/addons.js` : formats de configuration de chaque addon
 - `test/` : `npm test`
 
+Police Figtree (SIL Open Font License), servie depuis `public/fonts/` : aucune requête vers Google.
+
 Licence MIT.

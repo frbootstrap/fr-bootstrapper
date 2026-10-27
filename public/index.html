@@ -5,116 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FR Bootstrapper</title>
   <meta name="description" content="Installe d’un coup une sélection d’addons francophones sur ton compte Stremio ou Nuvio." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect x=%222%22 y=%225%22 width=%2228%22 height=%2222%22 rx=%227%22 fill=%22%236b95ff%22/><path d=%22M13 11.5v9l8-4.5z%22 fill=%22%230a1020%22/></svg>" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="brand-icon">🎬</span>
-      <div>
-        <h1>FR Bootstrapper</h1>
-        <p class="tagline">Installe d’un coup des addons francophones sur Stremio ou Nuvio</p>
-      </div>
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="5" width="28" height="22" rx="7" fill="var(--accent)"></rect><path d="M13 11.5v9l8-4.5z" fill="var(--ink)"></path></svg>
+      <span>FR Bootstrapper</span>
     </div>
+    <ol class="stepper" id="stepper">
+      <li><button type="button" data-goto="0">Ton appli</button></li>
+      <li><button type="button" data-goto="1">Ta clé debrid</button></li>
+      <li><button type="button" data-goto="2">Ta clé TMDB</button></li>
+      <li><button type="button" data-goto="3">Installer</button></li>
+    </ol>
   </header>
 
-  <main class="form-page">
-    <div class="howto">
-      <h2>Comment ça marche</h2>
-      <ol>
-        <li>Choisis ton appli et connecte-toi avec ton compte Stremio ou Nuvio.</li>
-        <li>Colle ta clé AllDebrid ou TorBox (ou les deux) : les addons s’en servent pour lire les vidéos.</li>
-        <li>Facultatif : ajoute une clé TMDB et tes clés de trackers pour avoir plus d’addons.</li>
-        <li>Clique sur « Installer » : les addons arrivent sur ton compte, sur tous tes appareils.</li>
-      </ol>
-      <p class="form-hint" style="margin:14px 0 0;">Ton mot de passe Stremio ou Nuvio part directement de ton navigateur vers Stremio ou Nuvio. Tes clés (debrid, TMDB, trackers) servent à fabriquer tes liens d’addons puis sont oubliées : rien n’est enregistré, aucune statistique. Le code est public.</p>
-      <details class="help">
-        <summary>Besoin d’aide ?</summary>
-        <h3>Où trouver ma clé debrid ?</h3>
-        <p>AllDebrid : <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>, copie une clé de la liste (ou crée-en une). TorBox : <a href="https://torbox.app/settings" target="_blank" rel="noopener">torbox.app/settings</a>, rubrique « API Key ». Copie-la en entier, sans espace.</p>
-        <h3>Pourquoi certains addons ne sont pas installés ?</h3>
-        <p>On n’installe que ce qui marchera avec tes clés. Sans clé TMDB, pas de WaCustom ni de Frenchio. Sans clé de tracker, pas de Frenchio ni de Stream-Fusion. Tous les autres marchent avec ta seule clé debrid.</p>
-        <h3>Comment savoir si ça a marché ?</h3>
-        <p>La dernière ligne dit « Terminé : … addons installés ». Relance ton appli, puis clique sur « Tester mes addons » : chaque addon cherche un film connu et affiche le nombre de liens trouvés.</p>
-        <h3>Un addon affiche ✗ ?</h3>
-        <p>Un ✗ isolé n’est pas grave : cet addon est en panne ou n’a pas ce film, les autres prennent le relais. Si tout est en ✗, vérifie que ton abonnement debrid est actif.</p>
-      </details>
-    </div>
+  <main class="layout">
+    <form class="card" id="install-form" novalidate>
+      <section class="step" data-step="0">
+        <h1>Connecte ton compte</h1>
+        <p class="lead">Installe d’un coup des addons francophones sur Stremio ou Nuvio. Ton mot de passe part directement de ton navigateur vers Stremio ou Nuvio, jamais chez nous.</p>
+        <fieldset class="choice">
+          <legend>Ton appli</legend>
+          <label class="chip"><input type="radio" name="platform" value="stremio" checked /> Stremio</label>
+          <label class="chip"><input type="radio" name="platform" value="nuvio" /> Nuvio</label>
+        </fieldset>
+        <div class="grid2">
+          <div class="field">
+            <label for="email">Email du compte</label>
+            <input id="email" type="email" name="email" autocomplete="username" placeholder="toi@exemple.com" />
+          </div>
+          <div class="field">
+            <label for="password">Mot de passe du compte</label>
+            <input id="password" type="password" name="password" autocomplete="current-password" />
+          </div>
+        </div>
+        <details class="more stremio-only">
+          <summary>Tu te connectes avec Google ou Facebook&nbsp;?</summary>
+          <div class="field">
+            <label for="authKey">Ta clé de connexion Stremio (authKey), à la place de l’email et du mot de passe</label>
+            <input id="authKey" type="text" name="authKey" spellcheck="false" />
+            <p class="form-hint">Sur <a href="https://web.stremio.com" target="_blank" rel="noopener">web.stremio.com</a>, connecte-toi, appuie sur F12, onglet Console, tape <code>JSON.parse(localStorage.getItem("profile")).auth.key</code> puis Entrée, et copie le résultat.</p>
+          </div>
+        </details>
+      </section>
 
-    <form class="panel form" id="install-form" novalidate>
-      <fieldset class="choice">
-        <legend>Ton appli</legend>
-        <label class="chip-radio"><input type="radio" name="platform" value="stremio" checked /> Stremio</label>
-        <label class="chip-radio"><input type="radio" name="platform" value="nuvio" /> Nuvio</label>
-      </fieldset>
+      <section class="step" data-step="1" hidden>
+        <h1>Ta clé debrid</h1>
+        <p class="lead">Les addons s’en servent pour lire les vidéos. Une seule suffit ; avec les deux, AllDebrid passe en premier et TorBox sert de secours.</p>
+        <div class="field">
+          <label for="adKey">Clé AllDebrid</label>
+          <div class="row">
+            <input id="adKey" type="text" name="adKey" spellcheck="false" autocomplete="off" placeholder="Colle ta clé ici" />
+            <button class="btn" type="button" data-check="alldebrid" data-field="adKey">Vérifier</button>
+          </div>
+          <p class="form-hint">Sur <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>, copie une clé de la liste (ou crées-en une).</p>
+        </div>
+        <div class="field">
+          <label for="tbKey">Clé TorBox <span class="opt">· facultatif</span></label>
+          <div class="row">
+            <input id="tbKey" type="text" name="tbKey" spellcheck="false" autocomplete="off" placeholder="Colle ta clé ici" />
+            <button class="btn" type="button" data-check="torbox" data-field="tbKey">Vérifier</button>
+          </div>
+          <p class="form-hint">Sur <a href="https://torbox.app/settings" target="_blank" rel="noopener">torbox.app/settings</a>, rubrique « API Key ».</p>
+        </div>
+      </section>
 
-      <label>Email du compte
-        <input type="email" name="email" autocomplete="username" placeholder="toi@exemple.com" />
-      </label>
-      <label>Mot de passe du compte
-        <input type="password" name="password" autocomplete="current-password" />
-      </label>
-      <details class="stremio-only">
-        <summary>Compte créé avec Google ou Facebook ?</summary>
-        <label>Ta clé de connexion Stremio (authKey)
-          <input type="text" name="authKey" spellcheck="false" placeholder="à la place de l’email et du mot de passe" />
-        </label>
-        <p class="form-hint">Sur <a href="https://web.stremio.com" target="_blank" rel="noopener">web.stremio.com</a>, connecte-toi, appuie sur F12, onglet Console, tape <code>JSON.parse(localStorage.getItem("profile")).auth.key</code> puis Entrée, et copie le résultat.</p>
-      </details>
+      <section class="step" data-step="2" hidden>
+        <p class="kicker">Gratuite · 2 minutes · fortement conseillée</p>
+        <h1>Ta clé TMDB</h1>
+        <p class="lead">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
+        <div class="unlocks">
+          <div><strong>WaCustom</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
+          <div><strong>Frenchio</strong><span>Gros moteur de recherche FR. Il faut aussi une clé tr4ker ou C411 (plus bas).</span></div>
+        </div>
+        <div class="field">
+          <label for="tmdb">Jeton d’accès en lecture TMDB</label>
+          <div class="row">
+            <input id="tmdb" type="text" name="tmdb" spellcheck="false" autocomplete="off" placeholder="eyJhbGciOi…" />
+            <button class="btn" type="button" data-check="tmdb" data-field="tmdb">Vérifier</button>
+          </div>
+          <p class="form-hint"></p>
+        </div>
+        <div class="howto">
+          <strong>Comment l’avoir ?</strong>
+          <ol>
+            <li>Crée un compte gratuit sur <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a>.</li>
+            <li>Va sur <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Paramètres → API</a> et demande une clé (usage personnel).</li>
+            <li>Copie le « jeton d’accès en lecture de l’API », le plus long des deux (il commence par eyJ).</li>
+          </ol>
+        </div>
+        <details class="more">
+          <summary>Tu as des comptes sur des trackers ? (facultatif)</summary>
+          <p class="form-hint">Colle seulement les clés API des trackers où tu as un compte. Chaque clé est donnée à tous les addons qui savent s’en servir : Frenchio (avec la clé TMDB), Stream-Fusion et UwU.</p>
+          <div id="trackers" class="trackers"></div>
+        </details>
+      </section>
 
-      <label>Clé AllDebrid
-        <input type="text" name="adKey" spellcheck="false" autocomplete="off" />
-      </label>
-      <button class="btn" type="button" data-check="alldebrid" data-field="adKey">Vérifier</button>
-      <p class="form-hint">Sur <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>.</p>
-      <label>Clé TorBox
-        <input type="text" name="tbKey" spellcheck="false" autocomplete="off" />
-      </label>
-      <button class="btn" type="button" data-check="torbox" data-field="tbKey">Vérifier</button>
-      <p class="form-hint">Sur <a href="https://torbox.app/settings" target="_blank" rel="noopener">torbox.app/settings</a>, rubrique « API Key ».</p>
-      <p class="form-hint">Remplis au moins une des deux. Si tu as les deux, AllDebrid passe en premier et TorBox sert de secours.</p>
+      <section class="step" data-step="3" hidden>
+        <h1>C’est parti</h1>
+        <p class="lead" id="install-lead"></p>
+        <fieldset class="choice">
+          <legend>Fiches et catalogues</legend>
+          <label class="chip"><input type="radio" name="meta" value="tmdb" checked /> En français, puis Cinemeta</label>
+          <label class="chip"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul (anglais)</label>
+        </fieldset>
+        <p class="form-hint">« En français » affiche titres et résumés en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll.</p>
+        <label class="check"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
+        <details class="more">
+          <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion&nbsp;?</summary>
+          <p class="form-hint">Colle ton lien d’installation (il finit par /manifest.json). Sinon, laisse vide : on te les configure automatiquement.</p>
+          <div class="field"><label for="mine_lumio">Lumio</label><input id="mine_lumio" type="url" name="mine_lumio" spellcheck="false" placeholder="https://…/manifest.json" /></div>
+          <div class="field"><label for="mine_wacustom">WaCustom</label><input id="mine_wacustom" type="url" name="mine_wacustom" spellcheck="false" placeholder="https://…/manifest.json" /></div>
+          <div class="field"><label for="mine_streamfusion">Stream-Fusion</label><input id="mine_streamfusion" type="url" name="mine_streamfusion" spellcheck="false" placeholder="https://…/manifest.json" /></div>
+        </details>
+        <button class="btn btn-primary btn-big" type="submit" id="install-btn">Installer les addons</button>
+        <ul class="install-log" id="install-log" aria-live="polite"></ul>
+        <div class="form-warning" id="accounts" hidden></div>
+        <button class="btn" type="button" id="test-btn" hidden>Tester mes addons</button>
+      </section>
 
-      <details>
-        <summary>Plus d’addons : clé TMDB (gratuite, facultative)</summary>
-        <label>Jeton d’accès en lecture TMDB
-          <input type="text" name="tmdb" spellcheck="false" autocomplete="off" placeholder="eyJhbGciOi…" />
-        </label>
-        <p class="form-hint">Ajoute WaCustom (téléchargements directs 1fichier) et permet Frenchio. Crée un compte gratuit sur <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a>, puis va sur <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a>, demande une clé (usage personnel) et copie le long « jeton d’accès en lecture de l’API » (il commence par eyJ).</p>
-      </details>
-
-      <details>
-        <summary>Plus d’addons : tes comptes de trackers (facultatif)</summary>
-        <p class="form-hint">Colle seulement les clés API des trackers où tu as un compte. Chaque clé est donnée à tous les addons qui savent s’en servir : Frenchio (avec une clé TMDB), Stream-Fusion et UwU.</p>
-        <div id="trackers"></div>
-      </details>
-
-      <details>
-        <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion ?</summary>
-        <p class="form-hint">Colle ton lien d’installation (il finit par /manifest.json). Sinon, laisse vide : on te les configure automatiquement.</p>
-        <label>Lumio <input type="url" name="mine_lumio" spellcheck="false" placeholder="https://…/manifest.json" /></label>
-        <label>WaCustom <input type="url" name="mine_wacustom" spellcheck="false" placeholder="https://…/manifest.json" /></label>
-        <label>Stream-Fusion <input type="url" name="mine_streamfusion" spellcheck="false" placeholder="https://…/manifest.json" /></label>
-      </details>
-
-      <fieldset class="choice">
-        <legend>Fiches et catalogues</legend>
-        <label class="chip-radio"><input type="radio" name="meta" value="tmdb" checked /> En français (TMDB), puis Cinemeta</label>
-        <label class="chip-radio"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul</label>
-      </fieldset>
-      <p class="form-hint">TMDB affiche les titres et résumés en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll.</p>
-
-      <label class="check">
-        <input type="checkbox" name="keep" />
-        Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)
-      </label>
-
-      <button class="btn btn-primary" type="submit" id="install-btn">Installer les addons</button>
-      <ul class="install-log" id="install-log" aria-live="polite"></ul>
-      <div class="form-warning" id="accounts" hidden></div>
-      <button class="btn" type="button" id="test-btn" hidden>Tester mes addons</button>
+      <p class="step-error" id="step-error" role="alert"></p>
+      <div class="nav">
+        <button class="btn btn-ghost" type="button" id="back-btn">Retour</button>
+        <button class="btn btn-primary" type="button" id="next-btn">Continuer</button>
+      </div>
     </form>
+
+    <aside class="card summary" aria-live="polite">
+      <h2>Ce qui sera installé</h2>
+      <p class="count"><span id="count">0</span> <span>sur <span id="total">13</span> addons</span></p>
+      <div class="bar"><div id="bar"></div></div>
+      <ul class="addons" id="addons"></ul>
+    </aside>
   </main>
+
+  <details class="help">
+    <summary>Besoin d’aide&nbsp;?</summary>
+    <h3>Comment savoir si ça a marché ?</h3>
+    <p>La dernière ligne dit « Terminé : … addons installés ». Relance ton appli, puis clique sur « Tester mes addons » : chaque addon cherche un film connu et affiche le nombre de liens trouvés.</p>
+    <h3>Un addon affiche ✗ ?</h3>
+    <p>Un ✗ isolé n’est pas grave : cet addon est en panne ou n’a pas ce film, les autres prennent le relais. Si tout est en ✗, vérifie que ton abonnement debrid est actif.</p>
+    <h3>Mes clés sont-elles gardées ?</h3>
+    <p>Non. Tes clés servent à fabriquer tes liens d’addons puis sont oubliées : rien n’est enregistré, aucune statistique. Le code est public.</p>
+  </details>
 
   <footer>Cette page n’héberge aucun contenu : elle configure des addons tiers sur ton propre compte. Code public, aucune donnée gardée.</footer>
 
@@ -142,9 +178,10 @@
     let installed = [];
 
     document.getElementById('trackers').innerHTML = TRACKERS.map(([id, name]) =>
-      `<label>Clé API ${name}<input type="text" name="trk_${id}" spellcheck="false" autocomplete="off" /></label>` +
+      `<div class="field"><label for="trk_${id}">Clé API ${name}</label><div class="row"><input id="trk_${id}" type="text" name="trk_${id}" spellcheck="false" autocomplete="off" />` +
       // NekoBT : personne ne sait vérifier ses clés
-      (id === 'nekobt' ? '' : `<button class="btn" type="button" data-check="${id}" data-field="trk_${id}">Vérifier</button><p class="form-hint"></p>`)).join('');
+      (id === 'nekobt' ? '' : `<button class="btn" type="button" data-check="${id}" data-field="trk_${id}">Vérifier</button>`) +
+      '</div><p class="form-hint"></p></div>').join('');
 
     const line = (text, state) => {
       const li = document.createElement('li');
@@ -167,21 +204,29 @@
       return data;
     }
 
+    // Le jeton TMDB se vérifie depuis le navigateur : il ne part que chez TMDB
+    async function checkTmdb(token) {
+      const r = await fetch('https://api.themoviedb.org/3/authentication', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null);
+      if (r?.ok) return {};
+      if (r?.status === 401) return { error: 'TMDB refuse ce jeton : copie le « jeton d’accès en lecture », le long qui commence par eyJ' };
+      return { note: 'TMDB ne répond pas pour l’instant, impossible de vérifier' };
+    }
+
     // Le bouton « Vérifier » écrit son verdict dans le texte d'aide juste dessous
     document.querySelectorAll('[data-check]').forEach((b) => {
-      const hint = b.nextElementSibling;
+      const hint = b.closest('.field').querySelector('.form-hint');
       const help = hint.innerHTML;
       b.addEventListener('click', async () => {
         const key = form[b.dataset.field].value.trim();
         if (!key) return void (hint.textContent = '✗ Colle d’abord ta clé.');
         b.disabled = true;
         try {
-          const { error, note } = await postJson('/api/verifier', { service: b.dataset.check, key });
+          const { error, note } = b.dataset.check === 'tmdb' ? await checkTmdb(key) : await postJson('/api/verifier', { service: b.dataset.check, key });
           hint.textContent = error ? `✗ ${error}` : note ? `? ${note}` : '✓ Clé acceptée.';
-          hint.style.color = error ? 'var(--accent)' : note ? '' : 'var(--accent-2)';
+          hint.style.color = error ? 'var(--danger)' : note ? '' : 'var(--ok)';
         } catch (err) {
           hint.textContent = `✗ ${err.message}`;
-          hint.style.color = 'var(--accent)';
+          hint.style.color = 'var(--danger)';
         }
         b.disabled = false;
         setTimeout(() => { hint.innerHTML = help; hint.style.color = ''; }, 8000);
@@ -277,8 +322,94 @@
       testBtn.textContent = 'Refaire le test';
     });
 
+    // Assistant en 4 étapes : une seule section visible, la liste de droite suit en direct
+    const steps = [...form.querySelectorAll('.step')];
+    const stepBtns = [...document.querySelectorAll('[data-goto]')];
+    const backBtn = document.getElementById('back-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const stepError = document.getElementById('step-error');
+    let current = 0;
+
+    function stepProblem(i) {
+      if (i === 0 && !form.authKey.value.trim() && (!form.email.value.trim() || !form.password.value)) return 'Il manque ton email ou ton mot de passe.';
+      if (i === 1 && !form.adKey.value.trim() && !form.tbKey.value.trim()) return 'Il faut au moins une clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.';
+      return '';
+    }
+    function show(i) {
+      current = i;
+      steps.forEach((s, n) => { s.hidden = n !== i; });
+      stepBtns.forEach((b, n) => { b.dataset.state = n < i ? 'done' : n === i ? 'now' : 'next'; b.disabled = n > i; });
+      backBtn.hidden = i === 0;
+      nextBtn.hidden = i === steps.length - 1;
+      stepError.textContent = '';
+      updateSummary();
+      const title = steps[i].querySelector('h1');
+      title.tabIndex = -1;
+      title.focus({ preventScroll: true });
+      window.scrollTo({ top: 0 });
+    }
+    function next() {
+      const problem = stepProblem(current);
+      if (problem) return void (stepError.textContent = problem);
+      show(current + 1);
+    }
+    nextBtn.addEventListener('click', next);
+    backBtn.addEventListener('click', () => show(current - 1));
+    stepBtns.forEach((b, n) => b.addEventListener('click', () => show(n)));
+
+    // Mêmes règles que lib/addons.js, qui reste seul juge au moment d'installer
+    const ADDONS = [
+      { name: 'Fiches en français', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
+      { name: 'Collections', note: 'sagas', ok: () => true, free: true },
+      { name: 'Lumio', ok: (k) => k.debrid },
+      { name: 'WaCustom', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wacustom), need: '+ clé TMDB', tmdb: true },
+      { name: 'Frenchio', ok: (k) => k.debrid && k.tmdb && k.frenchio, need: '+ TMDB et tr4ker ou C411', tmdb: true },
+      { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
+      { name: 'UwU-FR', note: 'animés', ok: (k) => k.debrid },
+      { name: 'Torrentio', ok: (k) => k.debrid },
+      { name: 'Comet', ok: (k) => k.debrid },
+      { name: 'TorrentsDB', ok: (k) => k.debrid },
+      { name: 'FKStream', note: 'animés Kai', ok: (k) => k.debrid },
+      { name: 'Anime Catalogs', note: 'catalogues', ok: (k) => k.debrid },
+      { name: 'OpenSubtitles v3+', note: 'sous-titres', ok: (k) => k.debrid },
+    ];
+    const LOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+    const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+    function updateSummary() {
+      const has = (id) => !!form[`trk_${id}`].value.trim();
+      const k = {
+        debrid: !!(form.adKey.value.trim() || form.tbKey.value.trim()),
+        tmdb: /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim()),
+        meta: form.meta.value === 'tmdb',
+        frenchio: has('tr4ker') || has('c411'),
+        sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
+        mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
+      };
+      const rows = ADDONS.map((a) => {
+        const on = a.ok(k);
+        const why = on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
+        return { ...a, on, why };
+      }).sort((a, b) => b.on - a.on);
+      const n = rows.filter((r) => r.on).length;
+      document.getElementById('addons').innerHTML = rows.map((r) =>
+        `<li class="${r.on ? 'on' : 'off'}${!r.on && r.tmdb && k.debrid ? ' tmdb' : ''}">${r.on ? CHECK : LOCK}<span>${r.name}</span><small>${r.why}</small></li>`).join('');
+      document.getElementById('count').textContent = n;
+      document.getElementById('total').textContent = ADDONS.length;
+      document.getElementById('bar').style.transform = `scaleX(${n / ADDONS.length})`;
+      const app = form.platform.value === 'nuvio' ? 'Nuvio' : 'Stremio';
+      document.getElementById('install-lead').textContent = `On installe ${n} addon${n > 1 ? 's' : ''} sur ton compte ${app}, sur tous tes appareils. Tu pourras les tester juste après.`;
+      if (!btn.disabled) btn.textContent = `Installer les ${n} addons`;
+      nextBtn.textContent = current === 2 && !form.tmdb.value.trim() ? 'Passer cette étape' : 'Continuer';
+    }
+    form.addEventListener('input', updateSummary);
+    form.addEventListener('change', updateSummary);
+    show(0);
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      // Entrée dans un champ = étape suivante, pas installation
+      if (current < steps.length - 1) return next();
       log.innerHTML = '';
       testBtn.hidden = true;
       accounts.hidden = true;
@@ -346,7 +477,7 @@
         line(`Échec : ${err.message}. Vérifie tes identifiants puis réessaie.`, 'ko');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Installer les addons';
+        updateSummary();
       }
     });
   })();
