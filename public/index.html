@@ -80,7 +80,6 @@
         <p class="lead">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
         <div class="unlocks">
           <div><strong>WaCustom</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
-          <div><strong>Frenchio</strong><span>Gros moteur de recherche FR. Il faut aussi une clé tr4ker ou C411 (onglet suivant).</span></div>
         </div>
         <div class="field">
           <label for="tmdb">Jeton d’accès en lecture TMDB</label>
@@ -105,7 +104,6 @@
         <h1>Tes trackers</h1>
         <p class="lead">Un tracker, c’est un site communautaire qui répertorie des torrents, souvent en VF. Avec un compte, tu donnes aux addons accès à son catalogue : beaucoup plus de résultats en français. Inscris-toi, puis copie ta clé API ici.</p>
         <div class="unlocks">
-          <div><strong>Frenchio</strong><span>Avec une clé tr4ker ou C411, et ta clé TMDB.</span></div>
           <div><strong>Stream-Fusion</strong><span>Avec n’importe quelle clé, sauf NekoBT.</span></div>
         </div>
         <p class="form-hint">Chaque clé est aussi donnée à UwU-FR (NekoBT : animés). Mets-en autant que tu veux : plus il y en a, plus il y a de résultats.</p>
@@ -379,7 +377,7 @@
       { name: 'Collections', note: 'sagas', ok: () => true, free: true },
       { name: 'Lumio', ok: (k) => k.debrid },
       { name: 'WaCustom', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wacustom), need: '+ clé TMDB', tmdb: true },
-      { name: 'Frenchio', ok: (k) => k.debrid && k.tmdb && k.frenchio, need: '+ TMDB et tr4ker ou C411', tmdb: true },
+      { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
       { name: 'UwU-FR', note: 'animés', ok: (k) => k.debrid },
       { name: 'Torrentio', ok: (k) => k.debrid },
@@ -398,7 +396,6 @@
         debrid: !!(form.adKey.value.trim() || form.tbKey.value.trim()),
         tmdb: /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim()),
         meta: form.meta.value === 'tmdb',
-        frenchio: has('tr4ker') || has('c411'),
         sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
         mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
       };
