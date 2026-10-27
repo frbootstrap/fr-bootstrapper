@@ -3,7 +3,7 @@
 Page qui installe d'un coup une sélection d'addons francophones sur un compte **Stremio** ou **Nuvio**.
 
 - Le mot de passe Stremio/Nuvio part directement du navigateur vers Stremio/Nuvio.
-- Les clés (debrid, TMDB, trackers) servent à fabriquer les liens d'addons dans `functions/api/liens.js`, puis sont oubliées : rien n'est enregistré, aucune statistique.
+- Les clés (debrid, TMDB, trackers) servent à fabriquer les liens d'addons dans `functions/api/liens.js`, puis sont oubliées : rien n'est enregistré. Seul un compteur d'installations (un nombre, dans le KV `COMPTEUR`) est tenu, sans rien sur les personnes.
 - On n'installe que les addons qui marcheront avec les clés fournies (voir `lib/addons.js`).
 - Cette page n'héberge aucun contenu : elle configure des addons tiers sur le compte de la personne.
 

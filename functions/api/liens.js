@@ -6,7 +6,12 @@ const isKey = (key) => typeof key === 'string' && /^[A-Za-z0-9_.-]{8,256}$/.test
 const isManifest = (url) => typeof url === 'string' && /^https:\/\/[^\s]+\/manifest\.json$/.test(url);
 const fail = (error) => Response.json({ error }, { status: 400 });
 
-export async function onRequestPost({ request }) {
+// shortcut: lire puis écrire n'est pas atomique, deux installations au même instant peuvent compter pour une ; passer à D1 si le chiffre doit être exact
+async function compter(kv) {
+  await kv.put('installations', String((Number(await kv.get('installations')) || 0) + 1));
+}
+
+export async function onRequestPost({ request, env, waitUntil }) {
   const { alldebrid, torbox, tmdb, trackers = {}, mine = {} } = await request.json().catch(() => ({}));
 
   const debrid = Object.entries({ alldebrid, torbox }).filter(([, key]) => key);
@@ -29,5 +34,8 @@ export async function onRequestPost({ request }) {
     const problem = await checkDebrid(service, key);
     if (problem) return fail(problem);
   }
-  return Response.json({ addons: await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine }) });
+  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine });
+  // Compté ici (clé debrid déjà vérifiée) : impossible de gonfler le chiffre sans vraie clé
+  if (env.COMPTEUR) waitUntil(compter(env.COMPTEUR).catch(() => {}));
+  return Response.json({ addons });
 }
