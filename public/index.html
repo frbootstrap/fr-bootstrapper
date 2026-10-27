@@ -471,13 +471,13 @@
           const tA = performance.now();
           const ms = () => `${a.ms != null ? `lien ${a.ms} ms, ` : ''}fiche ${msTxt(tA)}`;
           try {
-            const r = await fetch(a.url);
+            const r = await fetch(a.url, { signal: AbortSignal.timeout(10000) });
             if (!r.ok) throw new Error(`erreur ${r.status}`);
             const manifest = await r.json();
             line(`${a.name} : prêt · ${ms()}`, 'ok');
             return { transportUrl: a.url, transportName: '', manifest, flags: {} };
           } catch (err) {
-            line(`${a.name} : ne répond pas en ce moment, sauté (${err.message}) · ${ms()}`, 'ko');
+            line(`${a.name} : ne répond pas en ce moment, sauté (${err.name === 'TimeoutError' ? 'trop lent' : err.message}) · ${ms()}`, 'ko');
             return null;
           }
         }));
