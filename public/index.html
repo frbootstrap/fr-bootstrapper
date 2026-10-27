@@ -455,30 +455,36 @@
         step.className = 'ok';
 
         line('Vérification de tes clés et fabrication des liens…');
+        const tLinks = performance.now();
         const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine });
+        const msTxt = (t) => `${Math.round(performance.now() - t)} ms`;
+        line(`Liens fabriqués en ${msTxt(tLinks)}`);
         // Nuvio n'a pas Cinemeta d'office (Stremio, si) : sans lui, pas de catalogue ni de fiches
         if (platform === 'nuvio') links.addons.unshift({ name: 'Cinemeta', url: 'https://v3-cinemeta.strem.io/manifest.json' });
         links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
         if (form.meta.value === 'tmdb') links.addons.unshift({ name: 'TMDB (français)', url: TMDB_FR });
         const fetched = await Promise.all(links.addons.map(async (a) => {
           if (a.error) {
-            line(`${a.name} : indisponible en ce moment, sauté (${a.error})`, 'ko');
+            line(`${a.name} : indisponible en ce moment, sauté (${a.error}) · lien ${a.ms} ms`, 'ko');
             return null;
           }
+          const tA = performance.now();
+          const ms = () => `${a.ms != null ? `lien ${a.ms} ms, ` : ''}fiche ${msTxt(tA)}`;
           try {
             const r = await fetch(a.url);
             if (!r.ok) throw new Error(`erreur ${r.status}`);
             const manifest = await r.json();
-            line(`${a.name} : prêt`, 'ok');
+            line(`${a.name} : prêt · ${ms()}`, 'ok');
             return { transportUrl: a.url, transportName: '', manifest, flags: {} };
           } catch (err) {
-            line(`${a.name} : ne répond pas en ce moment, sauté (${err.message})`, 'ko');
+            line(`${a.name} : ne répond pas en ce moment, sauté (${err.message}) · ${ms()}`, 'ko');
             return null;
           }
         }));
         const ours = fetched.filter(Boolean);
         if (!ours.length) throw new Error('aucun addon n’a répondu');
 
+        const tSend = performance.now();
         const current = await api.get(token);
         // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
         const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
@@ -487,6 +493,7 @@
         const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_COLLECTIONS;
         await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept]);
 
+        line(`Envoi à l’appli : ${msTxt(tSend)}`);
         showAccounts(links.addons.filter((a) => urls.has(a.url)));
         line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}. Relance l’appli pour les voir.`, 'ok done');
       } catch (err) {
