@@ -54,6 +54,7 @@ code { font-size: 0.9em; background: var(--surface2); padding: 1px 6px; border-r
   gap: calc(var(--u) * 3);
 }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.count { padding: 6px 14px; border-radius: 999px; background: var(--surface); color: var(--dim); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .tabs { display: flex; gap: 4px; flex: 0 1 780px; padding: 6px; border-radius: 999px; background: var(--surface); overflow-x: auto; scrollbar-width: none; }
 .tabs button {
   flex: 1 0 auto;
