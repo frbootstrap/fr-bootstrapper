@@ -62,7 +62,7 @@
             <input id="adKey" type="text" name="adKey" spellcheck="false" autocomplete="off" placeholder="Colle ta clé ici" />
             <button class="btn" type="button" data-check="alldebrid" data-field="adKey">Vérifier</button>
           </div>
-          <p class="form-hint">Sur <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>, copie une clé de la liste (ou crées-en une).</p>
+          <p class="form-hint">Sur <a href="https://alldebrid.com/apikeys" target="_blank" rel="noopener">alldebrid.com/apikeys</a>, copie une clé de la liste (ou crée-en une).</p>
         </div>
         <div class="field">
           <label for="tbKey">Clé TorBox <span class="opt">· facultatif</span></label>
@@ -202,8 +202,7 @@
 
     const trackerField = ([id, name, url]) =>
       `<div class="field"><label for="trk_${id}">Clé API ${name}</label><div class="row"><input id="trk_${id}" type="text" name="trk_${id}" spellcheck="false" autocomplete="off" />` +
-      // NekoBT : personne ne sait vérifier ses clés
-      (id === 'nekobt' ? '' : `<button class="btn" type="button" data-check="${id}" data-field="trk_${id}">Vérifier</button>`) +
+      `<button class="btn" type="button" data-check="${id}" data-field="trk_${id}">Vérifier</button>` +
       `</div><p class="form-hint"><a href="${url}" target="_blank" rel="noopener">${id === 'nekobt' ? 'nekobt.to' : `Où trouver ma clé ${name}`}</a>${id === 'nekobt' ? ' : Profil → Modifier, rubrique API.' : ''}</p></div>`;
     document.getElementById('trackers-open').innerHTML = TRACKERS.filter((t) => t[3]).map(trackerField).join('');
     document.getElementById('trackers-private').innerHTML = TRACKERS.filter((t) => !t[3]).map(trackerField).join('');
@@ -237,6 +236,19 @@
       return { note: 'TMDB ne répond pas pour l’instant, impossible de vérifier' };
     }
 
+    // NekoBT accepte n'importe quelle clé sans rien dire : on ne peut vérifier que sa forme et sa date d'expiration
+    function checkNekobt(key) {
+      try {
+        const { usr, exp } = JSON.parse(atob(key.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (!usr || !exp) throw new Error();
+        const until = new Date(exp * 1000).toLocaleDateString('fr-FR');
+        if (exp * 1000 < Date.now()) return { error: `cette clé a expiré le ${until} : crée-en une nouvelle sur nekobt.to` };
+        return { ok: `Clé bien copiée, valable jusqu’au ${until} (NekoBT ne permet pas de vérifier plus).` };
+      } catch {
+        return { error: 'clé mal copiée : il la faut en entier (elle commence par eyJ)' };
+      }
+    }
+
     // Le bouton « Vérifier » écrit son verdict dans le texte d'aide juste dessous
     document.querySelectorAll('[data-check]').forEach((b) => {
       const hint = b.closest('.field').querySelector('.form-hint');
@@ -246,8 +258,10 @@
         if (!key) return void (hint.textContent = '✗ Colle d’abord ta clé.');
         b.disabled = true;
         try {
-          const { error, note } = b.dataset.check === 'tmdb' ? await checkTmdb(key) : await postJson('/api/verifier', { service: b.dataset.check, key });
-          hint.textContent = error ? `✗ ${error}` : note ? `? ${note}` : '✓ Clé acceptée.';
+          const { error, note, ok } = b.dataset.check === 'tmdb' ? await checkTmdb(key)
+            : b.dataset.check === 'nekobt' ? checkNekobt(key)
+            : await postJson('/api/verifier', { service: b.dataset.check, key });
+          hint.textContent = error ? `✗ ${error}` : note ? `? ${note}` : `✓ ${ok || 'Clé acceptée.'}`;
           hint.style.color = error ? 'var(--danger)' : note ? '' : 'var(--ok)';
         } catch (err) {
           hint.textContent = `✗ ${err.message}`;
