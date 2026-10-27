@@ -3,3 +3,8 @@ pages_build_output_dir = "public"
 compatibility_date = "2026-10-01"
 # Buffer (encodage base64 des configs d'addons)
 compatibility_flags = ["nodejs_compat"]
+
+# Compteur d'installations : un seul nombre (functions/api/compteur.js)
+[[kv_namespaces]]
+binding = "COMPTEUR"
+id = "27acaec41dc346d2ad89b0b5732cfee5"
