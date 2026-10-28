@@ -12,7 +12,7 @@ async function compter(kv) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
-  const { alldebrid, torbox, tmdb, trackers = {}, mine = {} } = await request.json().catch(() => ({}));
+  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [] } = await request.json().catch(() => ({}));
 
   const debrid = Object.entries({ alldebrid, torbox }).filter(([, key]) => key);
   if (!debrid.length) return fail('il faut au moins une clé AllDebrid ou TorBox');
@@ -21,6 +21,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
   if (tmdb && !tmdbKeys(tmdb)) return fail('jeton TMDB invalide : copie le « jeton d’accès en lecture », pas la clé courte');
   if (typeof trackers !== 'object' || typeof mine !== 'object') return fail('requête invalide');
+  if (!Array.isArray(skip) || skip.some((s) => typeof s !== 'string')) return fail('requête invalide');
   for (const [name, key] of Object.entries(trackers)) {
     if (!TRACKERS[name] || (key && !isKey(key))) return fail(`clé ${name} invalide (copie-la en entier, sans espace)`);
   }
@@ -34,7 +35,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const problem = await checkDebrid(service, key);
     if (problem) return fail(problem);
   }
-  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine });
+  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip });
   // Compté ici (clé debrid déjà vérifiée) : impossible de gonfler le chiffre sans vraie clé
   if (env.COMPTEUR) waitUntil(compter(env.COMPTEUR).catch(() => {}));
   return Response.json({ addons });

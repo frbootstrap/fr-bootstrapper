@@ -51,6 +51,13 @@ test('AIOSources : liens en cache seulement, jamais de téléchargement direct',
   assert.deepStrictEqual(body.preferences.services, ['alldebrid', 'torbox']);
 });
 
+test('addons décochés : ni lien ni compte créé', async () => {
+  sent.length = 0;
+  const n = await names({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, skip: ['WaCustom', 'Torrentio'] });
+  assert(!n.includes('WaCustom') && !n.includes('Torrentio') && n.includes('Lumio'));
+  assert(!sent.some(([u]) => u.includes('wacustom')));
+});
+
 test('jeton TMDB invalide refusé', () => {
   assert.strictEqual(tmdbKeys('nimporte-quoi'), null);
   assert.strictEqual(tmdbKeys(TMDB).key, 'a'.repeat(32));

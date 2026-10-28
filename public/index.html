@@ -147,6 +147,7 @@
 
     <aside class="card summary" aria-live="polite">
       <h2>Ce qui sera installé</h2>
+      <p class="form-hint">Décoche ce que tu ne veux pas ; les flèches changent l’ordre (le premier de la liste est le premier dans ton appli).</p>
       <p class="count"><span id="count">0</span> <span>sur <span id="total">13</span> addons</span></p>
       <div class="bar"><div id="bar"></div></div>
       <ul class="addons" id="addons"></ul>
@@ -372,14 +373,15 @@
     backBtn.addEventListener('click', () => show(current - 1));
     stepBtns.forEach((b, n) => b.addEventListener('click', () => show(n)));
 
-    // Mêmes règles que lib/addons.js, qui reste seul juge au moment d'installer
+    // Mêmes règles que lib/addons.js, qui reste seul juge au moment d'installer ; même ordre par défaut.
+    // id = nom du lien quand il diffère du nom affiché
     const ADDONS = [
-      { name: 'Fiches en français', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
-      { name: 'Collections', note: 'sagas', ok: () => true, free: true },
+      { name: 'Fiches en français', id: 'TMDB (français)', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
+      { name: 'Collections', id: 'TMDB Collections', note: 'sagas', ok: () => true, free: true },
       { name: 'Lumio', ok: (k) => k.debrid },
-      { name: 'WaCustom', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wacustom), need: '+ clé TMDB', tmdb: true },
       { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
+      { name: 'WaCustom', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wacustom), need: '+ clé TMDB', tmdb: true },
       { name: 'UwU-FR', note: 'animés', ok: (k) => k.debrid },
       { name: 'Torrentio', ok: (k) => k.debrid },
       { name: 'Comet', ok: (k) => k.debrid },
@@ -390,7 +392,32 @@
       { name: 'FKStream', note: 'animés Kai', ok: (k) => k.debrid },
     ];
     const LOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-    const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    const ARROW = (d) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+    const idOf = (a) => a.id || a.name;
+    // Choix de la personne : ordre de la liste et addons décochés (a.off)
+    const order = [...ADDONS];
+    let rows = [];
+
+    // Cases et flèches de la liste : on garde le focus sur le bouton pressé après le redessin
+    document.getElementById('addons').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-move]');
+      if (!b) return;
+      // Échange avec le voisin visible (les addons verrouillés restent en bas, hors jeu)
+      const a = ADDONS[b.dataset.i];
+      const nb = rows[rows.indexOf(a) + Number(b.dataset.move)];
+      if (!nb?.on) return;
+      const x = order.indexOf(a);
+      const y = order.indexOf(nb);
+      [order[x], order[y]] = [order[y], order[x]];
+      updateSummary();
+      document.querySelector(`[data-move="${b.dataset.move}"][data-i="${b.dataset.i}"]`)?.focus();
+    });
+    document.getElementById('addons').addEventListener('change', (e) => {
+      if (!e.target.dataset.pick) return;
+      ADDONS[e.target.dataset.pick].off = !e.target.checked;
+      updateSummary();
+      document.querySelector(`[data-pick="${e.target.dataset.pick}"]`).focus();
+    });
 
     function updateSummary() {
       const has = (id) => !!form[`trk_${id}`].value.trim();
@@ -401,14 +428,21 @@
         sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
         mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
       };
-      const rows = ADDONS.map((a) => {
-        const on = a.ok(k);
-        const why = on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
-        return { ...a, on, why };
-      }).sort((a, b) => b.on - a.on);
-      const n = rows.filter((r) => r.on).length;
-      document.getElementById('addons').innerHTML = rows.map((r) =>
-        `<li class="${r.on ? 'on' : 'off'}${!r.on && r.tmdb && k.debrid ? ' tmdb' : ''}">${r.on ? CHECK : LOCK}<span>${r.name}</span><small>${r.why}</small></li>`).join('');
+      for (const a of ADDONS) {
+        a.on = a.ok(k);
+        a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
+      }
+      // Disponibles dans l'ordre choisi, verrouillés en dessous
+      rows = [...order.filter((a) => a.on), ...order.filter((a) => !a.on)];
+      const last = rows.filter((r) => r.on).length - 1;
+      const n = rows.filter((r) => r.on && !r.off).length;
+      document.getElementById('addons').innerHTML = rows.map((r, j) => {
+        const i = ADDONS.indexOf(r);
+        if (!r.on) return `<li class="off${r.tmdb && k.debrid ? ' tmdb' : ''}">${LOCK}<span>${r.name}</span><small>${r.why}</small></li>`;
+        return `<li class="on${r.off ? ' unpicked' : ''}"><label><input type="checkbox" data-pick="${i}"${r.off ? '' : ' checked'} /><span>${r.name}</span></label><small>${r.off ? 'pas installé' : r.why}</small>` +
+          `<button type="button" class="move" data-move="-1" data-i="${i}" aria-label="Monter ${r.name}"${j === 0 ? ' disabled' : ''}>${ARROW('m6 15 6-6 6 6')}</button>` +
+          `<button type="button" class="move" data-move="1" data-i="${i}" aria-label="Descendre ${r.name}"${j === last ? ' disabled' : ''}>${ARROW('m6 9 6 6 6-6')}</button></li>`;
+      }).join('');
       document.getElementById('count').textContent = n;
       document.getElementById('total').textContent = ADDONS.length;
       document.getElementById('bar').style.transform = `scaleX(${n / ADDONS.length})`;
@@ -447,6 +481,9 @@
       if (!authKey && (!email || !password)) return line('Il manque ton email ou ton mot de passe.', 'ko');
       if (!adKey && !tbKey) return line('Il manque ta clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.', 'ko');
       if (Object.values(mine).some((u) => !/^https:\/\/.+\/manifest\.json$/.test(u))) return line('Un lien « j’ai déjà un compte » doit commencer par https:// et finir par /manifest.json.', 'ko');
+      if (!ADDONS.some((a) => a.on && !a.off)) return line('Tous les addons sont décochés : coche au moins un addon dans la liste.', 'ko');
+      const skip = ADDONS.filter((a) => a.off).map(idOf);
+      const rank = (a) => order.findIndex((o) => idOf(o) === a.name); // Cinemeta (Nuvio) n'est pas dans la liste : -1, en tête
 
       btn.disabled = true;
       btn.textContent = 'Installation…';
@@ -458,13 +495,14 @@
 
         line('Vérification de tes clés et fabrication des liens…');
         const tLinks = performance.now();
-        const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine });
+        const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, skip });
         const msTxt = (t) => `${Math.round(performance.now() - t)} ms`;
         line(`Liens fabriqués en ${msTxt(tLinks)}`);
         // Nuvio n'a pas Cinemeta d'office (Stremio, si) : sans lui, pas de catalogue ni de fiches
         if (platform === 'nuvio') links.addons.unshift({ name: 'Cinemeta', url: 'https://v3-cinemeta.strem.io/manifest.json' });
-        links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
-        if (form.meta.value === 'tmdb') links.addons.unshift({ name: 'TMDB (français)', url: TMDB_FR });
+        if (!skip.includes('TMDB Collections')) links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
+        if (form.meta.value === 'tmdb' && !skip.includes('TMDB (français)')) links.addons.unshift({ name: 'TMDB (français)', url: TMDB_FR });
+        links.addons.sort((a, b) => rank(a) - rank(b));
         const fetched = await Promise.all(links.addons.map(async (a) => {
           if (a.error) {
             line(`${a.name} : indisponible en ce moment, sauté (${a.error}) · lien ${a.ms} ms`, 'ko');

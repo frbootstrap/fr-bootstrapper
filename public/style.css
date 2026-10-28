@@ -211,9 +211,19 @@ details.more[open] { display: flex; flex-direction: column; gap: 14px; }
 .addons li { display: flex; align-items: center; gap: 10px; min-height: 34px; font-size: 15px; font-weight: 600; }
 .addons li span { flex: 1; }
 .addons li small { font-size: 13px; font-weight: 700; color: var(--dim); text-align: right; }
-.addons li.on svg { color: var(--ok); }
 .addons li.off { color: var(--dim); }
 .addons li.tmdb small { color: var(--accent); }
+.addons li.on { min-height: 40px; gap: 4px; }
+.addons li label { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 40px; cursor: pointer; }
+.addons li input { width: 18px; height: 18px; margin: 0; accent-color: var(--ok); }
+.addons li.unpicked label span, .addons li.unpicked small { color: var(--dim); text-decoration: line-through; }
+.addons li.unpicked small { text-decoration: none; }
+.move { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--dim); cursor: pointer; transition: transform 160ms var(--ease-out); }
+.move:active { transform: scale(0.94); }
+.move:disabled { opacity: 0.25; cursor: default; }
+.move:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .move:not(:disabled):hover { background: var(--surface2); color: var(--text); } }
+@media (min-width: 901px) { .summary { max-height: calc(100vh - 48px); overflow-y: auto; } }
 
 /* Journal d'installation */
 .install-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
