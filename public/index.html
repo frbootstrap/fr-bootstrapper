@@ -52,6 +52,11 @@
             <p class="form-hint">Sur <a href="https://web.stremio.com" target="_blank" rel="noopener">web.stremio.com</a>, connecte-toi, appuie sur F12, onglet Console, tape <code>JSON.parse(localStorage.getItem("profile")).auth.key</code> puis Entrée, et copie le résultat.</p>
           </div>
         </details>
+        <div class="field nuvio-only" hidden>
+          <button class="btn" type="button" id="load-profiles">Voir mes profils Nuvio</button>
+          <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer. Sinon, on installe sur ton profil principal.</p>
+          <ul class="profiles" id="profiles"></ul>
+        </div>
       </section>
 
       <section class="step" data-step="1" hidden>
@@ -212,6 +217,7 @@
 
     form.platform.forEach((r) => r.addEventListener('change', () => {
       document.querySelector('.stremio-only').hidden = form.platform.value !== 'stremio';
+      document.querySelector('.nuvio-only').hidden = form.platform.value !== 'nuvio';
     }));
 
     async function postJson(url, body, headers = {}) {
@@ -291,18 +297,84 @@
         return d.access_token;
       },
       headers: (token) => ({ apikey: NUVIO_ANON, Authorization: `Bearer ${token}` }),
-      async get(token) {
-        const r = await fetch(`${NUVIO_API}/rest/v1/addons?select=*&profile_id=eq.1&order=sort_order`, { headers: nuvio.headers(token) });
+      // Profils du compte (mêmes appels que l'appli Nuvio) ; profile_index 1 = profil principal
+      async profiles(token) {
+        const list = await postJson(`${NUVIO_API}/rest/v1/rpc/sync_pull_profiles`, {}, nuvio.headers(token));
+        return (list || []).sort((a, b) => a.profile_index - b.profile_index);
+      },
+      async verifyPin(token, profile, pin) {
+        const d = await postJson(`${NUVIO_API}/rest/v1/rpc/verify_profile_pin`, { p_profile_id: profile, p_pin: pin }, nuvio.headers(token));
+        const r = Array.isArray(d) ? d[0] : d;
+        if (r?.unlocked) return;
+        throw new Error(r?.retry_after_seconds ? `trop d’essais, réessaie dans ${r.retry_after_seconds} s` : 'PIN incorrect');
+      },
+      async get(token, profile = 1) {
+        const r = await fetch(`${NUVIO_API}/rest/v1/addons?select=*&profile_id=eq.${profile}&order=sort_order`, { headers: nuvio.headers(token) });
         if (!r.ok) throw new Error(`lecture des addons refusée (${r.status})`);
         return (await r.json()).map((a) => ({ transportUrl: a.url, manifest: { name: a.name } }));
       },
-      async set(token, addons) {
+      async set(token, addons, profile = 1) {
         await postJson(`${NUVIO_API}/rest/v1/rpc/sync_push_addons`, {
-          p_profile_id: 1,
+          p_profile_id: profile,
           p_addons: addons.map((a, i) => ({ url: a.transportUrl, name: a.manifest?.name || 'Addon', enabled: true, sort_order: i })),
         }, nuvio.headers(token));
       },
     };
+
+    // Liste des profils Nuvio : textes venus de Nuvio posés en textContent (pas d'injection)
+    const profilesList = document.getElementById('profiles');
+    const profilesHint = document.getElementById('profiles-hint');
+    let profilesLoaded = false;
+    document.getElementById('load-profiles').addEventListener('click', async (e) => {
+      const email = form.email.value.trim();
+      if (!email || !form.password.value) return void (profilesHint.textContent = '✗ Remplis d’abord ton email et ton mot de passe.');
+      e.target.disabled = true;
+      profilesHint.textContent = 'Connexion à Nuvio…';
+      try {
+        const list = await nuvio.profiles(await nuvio.login(email, form.password.value));
+        profilesList.replaceChildren(...list.map((p) => {
+          const li = document.createElement('li');
+          const label = document.createElement('label');
+          const box = document.createElement('input');
+          box.type = 'checkbox';
+          box.dataset.profile = p.profile_index;
+          box.checked = p.profile_index === 1;
+          const dot = document.createElement('i');
+          dot.style.background = p.avatar_color_hex || 'var(--dim)';
+          const name = document.createElement('span');
+          name.textContent = p.name || `Profil ${p.profile_index}`;
+          label.append(box, dot, name);
+          li.append(label);
+          // Un profil qui reprend les addons du principal ne garde pas les siens : y écrire ne servirait à rien
+          if (p.uses_primary_addons && p.profile_index !== 1) {
+            box.disabled = true;
+            box.checked = false;
+            li.className = 'off';
+            const s = document.createElement('small');
+            s.textContent = 'suit le profil principal';
+            li.append(s);
+          } else if (p.pin_enabled) {
+            const pin = document.createElement('input');
+            Object.assign(pin, { type: 'password', inputMode: 'numeric', autocomplete: 'off', placeholder: 'PIN' });
+            pin.dataset.pin = p.profile_index;
+            pin.setAttribute('aria-label', `PIN du profil ${name.textContent}`);
+            pin.addEventListener('input', () => { if (pin.value) box.checked = true; });
+            li.append(pin);
+          }
+          return li;
+        }));
+        // Un seul profil sans PIN : rien à choisir, on installe sur le principal comme avant
+        profilesLoaded = list.length > 1 || !!list[0]?.pin_enabled;
+        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil avec PIN : tape son code, il est vérifié par Nuvio.'
+          : list.length ? `Un seul profil (${list[0].name}) : on installe dessus.` : 'Aucun profil trouvé : on installe sur ton profil principal.';
+        if (!profilesLoaded) profilesList.replaceChildren();
+      } catch (err) {
+        profilesHint.textContent = `✗ ${err.message}`;
+      }
+      e.target.disabled = false;
+    });
+    // Changer de compte = repartir de zéro
+    [form.email, form.password].forEach((f) => f.addEventListener('input', () => { profilesLoaded = false; profilesList.replaceChildren(); }));
 
     // Identifiants des comptes créés chez WaCustom / Stream-Fusion : affichés une seule fois
     function showAccounts(addons) {
@@ -531,6 +603,15 @@
       if (!adKey && !tbKey) return line('Il manque ta clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.', 'ko');
       if (Object.values(mine).some((u) => !/^https:\/\/.+\/manifest\.json$/.test(u))) return line('Un lien « j’ai déjà un compte » doit commencer par https:// et finir par /manifest.json.', 'ko');
       if (!ADDONS.some((a) => a.on && !a.off)) return line('Tous les addons sont décochés : coche au moins un addon dans la liste.', 'ko');
+      // Profils visés : ceux cochés si la liste a été affichée, sinon le principal (Stremio n'a pas de profils)
+      const targets = platform === 'nuvio' && profilesLoaded
+        ? [...profilesList.querySelectorAll('[data-profile]:checked:not(:disabled)')].map((b) => ({
+          id: +b.dataset.profile, name: b.parentNode.textContent, pin: profilesList.querySelector(`[data-pin="${b.dataset.profile}"]`)?.value.trim(),
+        }))
+        : [{ id: 1, name: '' }];
+      if (!targets.length) return line('Aucun profil Nuvio coché : coche au moins un profil (onglet « Ton appli »).', 'ko');
+      const lockedNoPin = targets.find((t) => t.pin === '');
+      if (lockedNoPin) return line(`Le profil ${lockedNoPin.name} a un PIN : tape-le à côté de son nom (onglet « Ton appli »).`, 'ko');
       const skip = ADDONS.filter((a) => a.off).map(idOf);
       const rank = (a) => order.findIndex((o) => idOf(o) === a.name); // Cinemeta (Nuvio) n'est pas dans la liste : -1, en tête
 
@@ -541,6 +622,15 @@
         const token = await api.login(email, password, authKey);
         step.textContent = `Connecté à ${platform === 'nuvio' ? 'Nuvio' : 'Stremio'}.`;
         step.className = 'ok';
+        // PIN vérifiés par Nuvio avant de toucher à quoi que ce soit ; un PIN faux arrête tout
+        for (const t of targets.filter((x) => x.pin)) {
+          try {
+            await nuvio.verifyPin(token, t.id, t.pin);
+          } catch (err) {
+            throw new Error(`profil ${t.name} : ${err.message}`);
+          }
+          line(`PIN du profil ${t.name} accepté.`, 'ok');
+        }
 
         line('Vérification de tes clés et fabrication des liens…');
         const tLinks = performance.now();
@@ -573,17 +663,21 @@
         const ours = fetched.filter(Boolean);
         if (!ours.length) throw new Error('aucun addon n’a répondu');
 
-        const tSend = performance.now();
-        const current = await api.get(token);
-        // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
-        const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
-        const urls = new Set([...pinned, ...ours].map((a) => a.transportUrl));
-        const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
         const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_COLLECTIONS;
-        await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept]);
+        const ourUrls = new Set(ours.map((a) => a.transportUrl));
+        // Même lot d'addons sur chaque profil ; « garder mes addons » s'applique à chacun séparément
+        for (const t of targets) {
+          const tSend = performance.now();
+          const current = await api.get(token, t.id);
+          // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
+          const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
+          const urls = new Set([...pinned, ...ours].map((a) => a.transportUrl));
+          const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
+          await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept], t.id);
+          line(`Envoi à l’appli${t.name ? ` (profil ${t.name})` : ''} : ${msTxt(tSend)}`, t.name ? 'ok' : '');
+        }
 
-        line(`Envoi à l’appli : ${msTxt(tSend)}`);
-        showAccounts(links.addons.filter((a) => urls.has(a.url)));
+        showAccounts(links.addons.filter((a) => ourUrls.has(a.url)));
         line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}. Relance l’appli pour les voir.`, 'ok done');
       } catch (err) {
         line(`Échec : ${err.message}. Vérifie tes identifiants puis réessaie.`, 'ko');
