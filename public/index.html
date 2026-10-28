@@ -147,7 +147,7 @@
 
     <aside class="card summary" aria-live="polite">
       <h2>Ce qui sera installé</h2>
-      <p class="form-hint">Décoche ce que tu ne veux pas ; les flèches changent l’ordre (le premier de la liste est le premier dans ton appli).</p>
+      <p class="form-hint">Glisse un addon par sa poignée pour changer l’ordre (le premier de la liste est le premier dans ton appli). Décoche ceux que tu ne veux pas.</p>
       <p class="count"><span id="count">0</span> <span>sur <span id="total">13</span> addons</span></p>
       <div class="bar"><div id="bar"></div></div>
       <ul class="addons" id="addons"></ul>
@@ -392,31 +392,53 @@
       { name: 'FKStream', note: 'animés Kai', ok: (k) => k.debrid },
     ];
     const LOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-    const ARROW = (d) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+    const GRIP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
     const idOf = (a) => a.id || a.name;
     // Choix de la personne : ordre de la liste et addons décochés (a.off)
     const order = [...ADDONS];
-    let rows = [];
+    const list = document.getElementById('addons');
 
-    // Cases et flèches de la liste : on garde le focus sur le bouton pressé après le redessin
-    document.getElementById('addons').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-move]');
-      if (!b) return;
-      // Échange avec le voisin visible (les addons verrouillés restent en bas, hors jeu)
-      const a = ADDONS[b.dataset.i];
-      const nb = rows[rows.indexOf(a) + Number(b.dataset.move)];
-      if (!nb?.on) return;
-      const x = order.indexOf(a);
-      const y = order.indexOf(nb);
-      [order[x], order[y]] = [order[y], order[x]];
-      updateSummary();
-      document.querySelector(`[data-move="${b.dataset.move}"][data-i="${b.dataset.i}"]`)?.focus();
+    // Glisser par la poignée (souris et doigt) : la ligne change de place au survol d'une autre, l'ordre est relu au lâcher
+    let drag = null;
+    list.addEventListener('pointerdown', (e) => {
+      const grip = e.target.closest('.grip');
+      if (!grip) return;
+      e.preventDefault();
+      drag = grip.closest('li');
+      drag.classList.add('dragging');
+      grip.setPointerCapture(e.pointerId);
     });
-    document.getElementById('addons').addEventListener('change', (e) => {
+    list.addEventListener('pointermove', (e) => {
+      const over = drag && document.elementFromPoint(e.clientX, e.clientY)?.closest('#addons li');
+      if (!over || over === drag) return;
+      const items = [...list.children];
+      if (items.indexOf(over) > items.indexOf(drag)) over.after(drag); else over.before(drag);
+    });
+    const drop = () => {
+      if (!drag) return;
+      drag = null;
+      order.splice(0, order.length, ...[...list.children].map((li) => ADDONS[li.dataset.i]));
+      updateSummary();
+    };
+    list.addEventListener('pointerup', drop);
+    list.addEventListener('pointercancel', drop);
+    // Au clavier : poignée + flèches haut/bas
+    list.addEventListener('keydown', (e) => {
+      const grip = e.target.closest('.grip');
+      const dir = { ArrowUp: -1, ArrowDown: 1 }[e.key];
+      if (!grip || !dir) return;
+      e.preventDefault();
+      const x = order.indexOf(ADDONS[grip.dataset.i]);
+      if (!order[x + dir]) return;
+      [order[x], order[x + dir]] = [order[x + dir], order[x]];
+      updateSummary();
+      list.querySelector(`.grip[data-i="${grip.dataset.i}"]`).focus();
+    });
+    list.addEventListener('change', (e) => {
       if (!e.target.dataset.pick) return;
       ADDONS[e.target.dataset.pick].off = !e.target.checked;
       updateSummary();
-      document.querySelector(`[data-pick="${e.target.dataset.pick}"]`).focus();
+      list.querySelector(`[data-pick="${e.target.dataset.pick}"]`).focus();
     });
 
     function updateSummary() {
@@ -432,16 +454,13 @@
         a.on = a.ok(k);
         a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
       }
-      // Disponibles dans l'ordre choisi, verrouillés en dessous
-      rows = [...order.filter((a) => a.on), ...order.filter((a) => !a.on)];
-      const last = rows.filter((r) => r.on).length - 1;
-      const n = rows.filter((r) => r.on && !r.off).length;
-      document.getElementById('addons').innerHTML = rows.map((r, j) => {
+      const n = order.filter((r) => r.on && !r.off).length;
+      // Tout se déplace, même verrouillé ; la case n'apparaît qu'une fois l'addon disponible
+      list.innerHTML = order.map((r) => {
         const i = ADDONS.indexOf(r);
-        if (!r.on) return `<li class="off${r.tmdb && k.debrid ? ' tmdb' : ''}">${LOCK}<span>${r.name}</span><small>${r.why}</small></li>`;
-        return `<li class="on${r.off ? ' unpicked' : ''}"><label><input type="checkbox" data-pick="${i}"${r.off ? '' : ' checked'} /><span>${r.name}</span></label><small>${r.off ? 'pas installé' : r.why}</small>` +
-          `<button type="button" class="move" data-move="-1" data-i="${i}" aria-label="Monter ${r.name}"${j === 0 ? ' disabled' : ''}>${ARROW('m6 15 6-6 6 6')}</button>` +
-          `<button type="button" class="move" data-move="1" data-i="${i}" aria-label="Descendre ${r.name}"${j === last ? ' disabled' : ''}>${ARROW('m6 9 6 6 6-6')}</button></li>`;
+        const grip = `<button type="button" class="grip" data-i="${i}" aria-label="Déplacer ${r.name} (flèches haut et bas)">${GRIP}</button>`;
+        if (!r.on) return `<li data-i="${i}" class="off${r.tmdb && k.debrid ? ' tmdb' : ''}">${grip}<span>${r.name}</span><small>${r.why}</small>${LOCK}</li>`;
+        return `<li data-i="${i}" class="on${r.off ? ' unpicked' : ''}">${grip}<label><span>${r.name}</span><small>${r.off ? 'pas installé' : r.why}</small><input type="checkbox" data-pick="${i}"${r.off ? '' : ' checked'} /></label></li>`;
       }).join('');
       document.getElementById('count').textContent = n;
       document.getElementById('total').textContent = ADDONS.length;
