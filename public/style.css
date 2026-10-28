@@ -219,9 +219,13 @@ details.more[open] { display: flex; flex-direction: column; gap: 14px; }
 .addons li input { width: 18px; height: 18px; margin: 0; accent-color: var(--ok); }
 .addons li.unpicked label span { color: var(--dim); text-decoration: line-through; }
 .addons li.unpicked small { color: var(--dim); }
-.addons li.dragging { background: var(--surface2); border-radius: 10px; }
+.addons { position: relative; }
+.addons li { border-radius: 12px; padding-right: 8px; transition: opacity 200ms var(--ease-out); }
+.addons.sorting li:not(.dragging) { opacity: 0.6; }
+.addons li.dragging { position: relative; z-index: 1; background: var(--surface2); box-shadow: inset 0 0 0 2px var(--accent); }
 .grip { width: 28px; height: 40px; flex: none; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--dim); cursor: grab; touch-action: none; }
-.dragging .grip { cursor: grabbing; color: var(--text); }
+.dragging .grip { cursor: grabbing; color: var(--accent); }
+.addons.sorting, .addons.sorting * { cursor: grabbing; }
 .grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) { .grip:hover { color: var(--text); } }
 @media (min-width: 901px) { .summary { max-height: calc(100vh - 48px); overflow-y: auto; } }

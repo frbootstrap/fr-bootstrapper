@@ -398,27 +398,57 @@
     const order = [...ADDONS];
     const list = document.getElementById('addons');
 
-    // Glisser par la poignée (souris et doigt) : la ligne change de place au survol d'une autre, l'ordre est relu au lâcher
+    // Glisser par la poignée (souris et doigt) : la ligne suit le pointeur, les autres glissent pour lui faire place,
+    // l'ordre est relu au lâcher. Positions de mise en page (offsetTop), pas visuelles, sinon les lignes en mouvement font rebondir l'échange.
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
     let drag = null;
+    let grab = 0;
+    const follow = (y) => {
+      drag.style.transform = `translateY(${y - grab - drag.offsetTop}px) scale(1.02)`;
+    };
     list.addEventListener('pointerdown', (e) => {
       const grip = e.target.closest('.grip');
-      if (!grip) return;
+      if (!grip || drag) return;
       e.preventDefault();
       drag = grip.closest('li');
+      const y = e.clientY - list.getBoundingClientRect().top;
+      grab = y - drag.offsetTop;
+      list.classList.add('sorting');
       drag.classList.add('dragging');
+      follow(y);
       grip.setPointerCapture(e.pointerId);
+      navigator.vibrate?.(8);
     });
     list.addEventListener('pointermove', (e) => {
-      const over = drag && document.elementFromPoint(e.clientX, e.clientY)?.closest('#addons li');
-      if (!over || over === drag) return;
+      if (!drag) return;
+      const y = e.clientY - list.getBoundingClientRect().top;
       const items = [...list.children];
-      if (items.indexOf(over) > items.indexOf(drag)) over.after(drag); else over.before(drag);
+      const over = items.find((li) => li !== drag && y >= li.offsetTop && y < li.offsetTop + li.offsetHeight);
+      if (over) {
+        const before = new Map(items.map((li) => [li, li.offsetTop]));
+        if (items.indexOf(over) > items.indexOf(drag)) over.after(drag); else over.before(drag);
+        if (!calm) {
+          for (const li of items) {
+            const d = before.get(li) - li.offsetTop;
+            if (li !== drag && d) li.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }], { duration: 220, easing: EASE });
+          }
+        }
+      }
+      follow(y);
     });
     const drop = () => {
       if (!drag) return;
+      const li = drag;
       drag = null;
-      order.splice(0, order.length, ...[...list.children].map((li) => ADDONS[li.dataset.i]));
-      updateSummary();
+      order.splice(0, order.length, ...[...list.children].map((el) => ADDONS[el.dataset.i]));
+      list.classList.remove('sorting');
+      // La ligne se repose à sa place avant le redessin de la liste
+      const done = () => updateSummary();
+      if (calm) return done();
+      li.animate([{ transform: li.style.transform }, { transform: 'none' }], { duration: 200, easing: EASE }).finished.then(done, done);
+      li.style.transform = '';
+      li.classList.remove('dragging');
     };
     list.addEventListener('pointerup', drop);
     list.addEventListener('pointercancel', drop);
