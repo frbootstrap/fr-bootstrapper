@@ -167,7 +167,7 @@
   <details class="help">
     <summary>Besoin d’aide&nbsp;?</summary>
     <h3>Comment savoir si ça a marché ?</h3>
-    <p>La dernière ligne dit « Terminé : … addons installés ». Relance ton appli : les addons apparaissent sur tous tes appareils.</p>
+    <p>La dernière ligne dit « Terminé : … addons installés ». Ferme complètement ton appli puis rouvre-la : les addons apparaissent sur tous tes appareils, en quelques secondes à une ou deux minutes au plus.</p>
     <h3>Un addon affiche ✗ ?</h3>
     <p>Pendant l’installation, un ✗ veut dire que cet addon ne répondait pas à ce moment-là : il est sauté, les autres sont installés quand même. Repasse plus tard pour l’ajouter.</p>
     <h3>Mes clés sont-elles gardées ?</h3>
@@ -687,7 +687,8 @@
         }
 
         showAccounts(links.addons.filter((a) => ourUrls.has(a.url)));
-        line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}. Relance l’appli pour les voir.`, 'ok done');
+        line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}.`, 'ok done');
+        line('Ferme complètement ton appli puis rouvre-la. Les addons peuvent mettre de quelques secondes à une ou deux minutes à apparaître (le temps que l’appli relise ton compte et remplisse l’accueil).', 'wait');
       } catch (err) {
         line(`Échec : ${err.message}. Vérifie tes identifiants puis réessaie.`, 'ko');
       } finally {

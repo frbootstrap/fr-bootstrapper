@@ -237,6 +237,8 @@ details.more[open] { display: flex; flex-direction: column; gap: 14px; }
 .install-log li.ok::before { content: '✓ '; color: var(--ok); font-weight: 800; }
 .install-log li.ko::before { content: '✗ '; color: var(--danger); font-weight: 800; }
 .install-log li.done { font-weight: 700; margin-top: 4px; }
+.install-log li.wait { padding: 12px 16px; border-radius: var(--r-field); background: var(--soft); border-left: 3px solid var(--accent); color: var(--text); line-height: 1.45; }
+.install-log li.wait::before { content: '⏳ '; }
 .form-warning { padding: 14px 18px; border-radius: var(--r-field); background: var(--soft); font-size: 15px; line-height: 1.45; }
 .form-warning[hidden] { display: none; }
 .secret { font-family: ui-monospace, monospace; user-select: all; overflow-wrap: anywhere; }
