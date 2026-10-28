@@ -355,17 +355,21 @@
             li.append(s);
           } else if (p.pin_enabled) {
             const pin = document.createElement('input');
-            Object.assign(pin, { type: 'password', inputMode: 'numeric', autocomplete: 'off', placeholder: 'PIN' });
+            // PIN Nuvio = 4 chiffres
+            Object.assign(pin, { type: 'password', inputMode: 'numeric', autocomplete: 'off', placeholder: 'PIN', maxLength: 4 });
             pin.dataset.pin = p.profile_index;
-            pin.setAttribute('aria-label', `PIN du profil ${name.textContent}`);
-            pin.addEventListener('input', () => { if (pin.value) box.checked = true; });
+            pin.setAttribute('aria-label', `PIN à 4 chiffres du profil ${name.textContent}`);
+            pin.addEventListener('input', () => {
+              pin.value = pin.value.replace(/\D/g, '').slice(0, 4);
+              if (pin.value) box.checked = true;
+            });
             li.append(pin);
           }
           return li;
         }));
         // Un seul profil sans PIN : rien à choisir, on installe sur le principal comme avant
         profilesLoaded = list.length > 1 || !!list[0]?.pin_enabled;
-        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil avec PIN : tape son code, il est vérifié par Nuvio.'
+        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
           : list.length ? `Un seul profil (${list[0].name}) : on installe dessus.` : 'Aucun profil trouvé : on installe sur ton profil principal.';
         if (!profilesLoaded) profilesList.replaceChildren();
       } catch (err) {
@@ -610,8 +614,8 @@
         }))
         : [{ id: 1, name: '' }];
       if (!targets.length) return line('Aucun profil Nuvio coché : coche au moins un profil (onglet « Ton appli »).', 'ko');
-      const lockedNoPin = targets.find((t) => t.pin === '');
-      if (lockedNoPin) return line(`Le profil ${lockedNoPin.name} a un PIN : tape-le à côté de son nom (onglet « Ton appli »).`, 'ko');
+      const lockedNoPin = targets.find((t) => t.pin != null && t.pin.length !== 4);
+      if (lockedNoPin) return line(`Le profil ${lockedNoPin.name} a un PIN : tape ses 4 chiffres à côté de son nom (onglet « Ton appli »).`, 'ko');
       const skip = ADDONS.filter((a) => a.off).map(idOf);
       const rank = (a) => order.findIndex((o) => idOf(o) === a.name); // Cinemeta (Nuvio) n'est pas dans la liste : -1, en tête
 
