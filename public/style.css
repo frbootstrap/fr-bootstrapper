@@ -242,6 +242,11 @@ details.more[open] { display: flex; flex-direction: column; gap: 14px; }
 .secret { font-family: ui-monospace, monospace; user-select: all; overflow-wrap: anywhere; }
 
 /* Aide + pied de page */
+.discord { width: min(1184px, calc(100% - 96px)); margin: 0 auto 32px; padding: 24px 28px; display: flex; align-items: center; gap: 24px; border: 1px solid rgba(88, 101, 242, 0.45); background: linear-gradient(120deg, rgba(88, 101, 242, 0.18), var(--surface) 60%); }
+.discord p { margin: 0; flex: 1; text-wrap: pretty; }
+.discord-btn { flex: none; min-height: 44px; padding: 0 22px; display: inline-flex; align-items: center; border-radius: 999px; background: #5865f2; color: #fff; transition: transform 160ms var(--ease-out), background 160ms; }
+.discord-btn:hover { background: #4752c4; text-decoration: none; }
+.discord-btn:active { transform: scale(0.97); }
 .help { max-width: 1280px; margin: 0 auto; padding: 0 calc(var(--u) * 6); }
 .help h3 { font-size: 16px; margin: 18px 0 4px; }
 .help p { margin: 0; max-width: 65ch; color: var(--dim); text-wrap: pretty; }
@@ -250,6 +255,8 @@ footer { max-width: 1280px; margin: 0 auto; padding: calc(var(--u) * 4) calc(var
 /* Téléphone : la liste passe sous l'étape, tout s'empile */
 @media (max-width: 900px) {
   .topbar, .layout, .help, footer { padding-left: 16px; padding-right: 16px; }
+  .discord { width: auto; margin: 0 16px 24px; flex-direction: column; align-items: stretch; text-align: left; }
+  .discord-btn { justify-content: center; }
   .tabs { flex-basis: 100%; flex-wrap: wrap; border-radius: 20px; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   .summary { position: static; }
