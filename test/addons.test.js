@@ -70,3 +70,9 @@ test('vérif tracker : valide, refusée, ou vérificateur en panne', async () =>
   reply('invalid'); assert(await checkTracker('tr4ker', 'KEY12345').then((r) => r.error));
   reply('unknown'); assert(await checkTracker('tr4ker', 'KEY12345').then((r) => r.note));
 });
+
+test('notes sur les affiches : clé RPDB seulement si la case est cochée', async () => {
+  const anime = async (input) => (await buildLinks({ alldebrid: 'ADKEY12345', ...input })).find((a) => a.name === 'Anime Catalogs').url;
+  assert(decodeURIComponent(await anime({})).includes('rpdbkey'));
+  assert(!decodeURIComponent(await anime({ notes: false })).includes('rpdbkey'));
+});

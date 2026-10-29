@@ -130,6 +130,7 @@
           <label class="chip"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul : en anglais</label>
         </fieldset>
         <p class="form-hint">L’addon TMDB affiche les titres, résumés et affiches en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll. Cinemeta (l’addon de base de Stremio, en anglais) reste installé derrière, en secours.</p>
+        <label class="check"><input type="checkbox" name="notes" checked /> Notes (IMDb, etc.) en bas des affiches</label>
         <label class="check"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
         <details class="more">
           <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion&nbsp;?</summary>
@@ -183,6 +184,7 @@
     // TMDB en français + 8 plateformes + affiches RPDB (clé gratuite publique) ; même lien pour tous, fait sur tmdb.creepso.com
     const TMDB_FR = 'https://tmdb.creepso.com/N4IgTgDgJgRg1gUwJ4gFwgC4AYC0AzMBBHSWHGAGwHsBjOAZxABoQKBDAOwHMBXNrhGhAEcAMQBKzEPQyE2AWwCW3NAG0QHPAA8pCiFKgd9LGtF0ZjIABYx5UiPMs0wPEAF0TbDG2pdGqVVBFKCEMeVgAOnYMBBkpDCQIQXR5KgA3RUEWDgVkkAAZL1iMAAJxBAoENnpYqXorKgB3AEkOAAkqeWTZHgQAXyYgkPQwyOji+MS8mrBMxmzcoUKYmTKKqpr56QaW9s7ul37BkGDQ8JgI2QQOKGUuSaShVIysjUX0ABVCG7u6ndaOl00D0jkMzpErj8VCwEo90DM5lIckDPt9btDtk0AftgYcBmCRudLlRLLC8s9Mkj3iAAAoknjsMB-LF7FEg-EnYaYIkYEkPaYIWa1BYo2n0xnM3aAg69DmnQmRJBVJkwqZPdKUkV5ACaysl2LZeOO8u5ir1qrh0kFiK1Ql1bBVmKlONQ7ONXNGF3Y3D4An56peVNFhR9-Fe9RZ0txsvd4K9nF4Yf98OtwrewYTvvD-1ZMtBnKEMjkSm4EU0Ogt5I1r2ReQAcggMHgKIoK06DXm5Vyi1US1wy9pk1ahVta0IG02W22I87DTGCdIrgo7hE9EOKTXqTTZl0SgA1YIIKj63PR-MmnvL0tryuF1Ojrc7hD7w-HlgzjtnruFpd9iKGUk1RSasgzyAARRR6A4ZAAGoTyjV0jQXS8-wAocETTMd0AgqDYPgl03WQ38V1MEJb2AwNbXQABhTgfDg98cwQwiC3hYjS1I9D71AoRaJyCgGPbU9EPnVjF2LFcvEAy0Nx49AAEEIAgSoSg+PdBI-YSWIvdj+ykriRzkkBFOU581I0piCKQsSUJXGw7HIkBZKokA2gAIQAeRKABZNhp0sudz27XSInsgybXTPJ3K83z-MjKzRJ0iTSwcaSq0oyKhBpB0FCoHgOAwCz4sC782OS-tUvCzCtxy1J8sK-CStjMrexIlx1xAlzqJcDgaCsJAwCoCgKEaztmvE1qOPaxyMIfUVuvyvqBqGkbGOKzs3D6IA/manifest.json';
     // TMDB Collections (sagas de films) en français ; placé juste après TMDB
+    const TMDB_FR_SANS_NOTES = 'https://tmdb.creepso.com/N4IgNghgdg5grhGBTEAuEAzATgWgGIBKIANCAM4AuWSEAtgJaxoDaIUGAHiSHQA7cATKP1IBjXgO4QKIkAAsARrW69as0VjggAumOkQwAexhkWoepPQVaAhQDpIFJJW4UAnrxTpahgG70UUig6LxAAGWlnCgACAiQwGjJnbjI5QwB3AEkoAAlDWi8qOCQAX2JzSxBrWwdIl1J3TzRyJCwA0yCQ5oinSlj4xOTSVIzsvIK0ItLykAtm6vsqJCgBRhhXD1Cff0C2LvQAFWoVtZS0rNz8ws1pivmbRePVpgbN5qS2ob2Jw6fT4fOYyukxuZTuVgedgohlkjS2fgC3GCPxAAAUYXBIFgzqNLj8pmDZpUFlCYRsmugPu0kfs0RisTiLuNrsVCXMITU3DRsa8KSBtojOiiAJrcxlA-GgmbsqqQrkQHlVN6U1rUoWhUUK8V4lm3In3GqQWAIZDk+E7GkoiLGxC7EZM4GoAnS4mQo3wW1m96qr7I0LWj2mgG45kg1ku95LOhrOzsLi882C76hABySAoGDA9Hj5EBOrDepllGo0dgsc4XpVnw6yeaaYzWZz9olurZlWLNAYZb4lf5CN2fuaqLaBWiADULEhDNrQ06peDyFGuzA7D2E97q5bQsP6KOJwIpzPHc6Fx3SyuhLDlX2LermgARehkKBINwAaiPkvDp6XMcvvapX1aUfZ9Xw-YMHS-Qt21-MtxEkddvH7LdmgAYWgAxwNzENj3nfVKVgld4IAn0a0HdB0OCMAsObfM52-fDFxLZdVxkXsBQHWkAEFeF4BJogOMcaLzWcT0Ys8WOkK8+UAsjuN4-jBOEnCoLbSNmJjRRlEQm8k3IkAcgAIQAeWiABZCAmxE3CGKLQi7C0kjNzvdAjNMiyrJU1sIwIjSy1UaTE04lFUQVOhDDgKAKGUyDvJ-PyVwCpy1VrdBQqwcLIuiz84vE+yNC0HSOJQijNCgUQ5DcLBDDAMAcoLNTfM7GMCuSoCUVQsqKqqmq6oglsGu0EogA/manifest.json'; // même réglage, sans clé RPDB
     const TMDB_COLLECTIONS = 'https://61ab9c85a149-tmdb-collections.baby-beamup.club/%7B%22enableAdultContent%22%3Afalse%2C%22enableSearch%22%3Atrue%2C%22enableCollectionFromMovie%22%3Atrue%2C%22language%22%3A%22fr%22%2C%22catalogList%22%3A%5B%22popular%22%2C%22newReleases%22%2C%22topRated%22%2C%22topRatedByCountry%22%2C%22topRatedByCompany%22%5D%2C%22discoverOnly%22%3A%7B%22popular%22%3Atrue%2C%22newReleases%22%3Afalse%2C%22topRated%22%3Atrue%2C%22topRatedByCountry%22%3Atrue%2C%22topRatedByCompany%22%3Atrue%7D%7D/manifest.json';
     // Clé publique « anon » de l'appli Nuvio (présente dans chaque copie de l'appli) ; à reprendre si Nuvio la change
     const NUVIO_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNTIxMzQ2LCJleHAiOjE5MzkyMDEzNDZ9.tmQaj682pwzehpqlgCDMnySOqiUvpgRbrE43T4VJpDI';
@@ -643,13 +645,13 @@
 
         line('Vérification de tes clés et fabrication des liens…');
         const tLinks = performance.now();
-        const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, skip });
+        const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, skip, notes: form.notes.checked });
         const msTxt = (t) => `${Math.round(performance.now() - t)} ms`;
         line(`Liens fabriqués en ${msTxt(tLinks)}`);
         // Nuvio n'a pas Cinemeta d'office (Stremio, si) : sans lui, pas de catalogue ni de fiches
         if (platform === 'nuvio') links.addons.unshift({ name: 'Cinemeta', url: 'https://v3-cinemeta.strem.io/manifest.json' });
         if (!skip.includes('TMDB Collections')) links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
-        if (form.meta.value === 'tmdb' && !skip.includes('TMDB (français)')) links.addons.unshift({ name: 'TMDB (français)', url: TMDB_FR });
+        if (form.meta.value === 'tmdb' && !skip.includes('TMDB (français)')) links.addons.unshift({ name: 'TMDB (français)', url: form.notes.checked ? TMDB_FR : TMDB_FR_SANS_NOTES });
         links.addons.sort((a, b) => rank(a) - rank(b));
         const fetched = await Promise.all(links.addons.map(async (a) => {
           if (a.error) {
@@ -672,7 +674,7 @@
         const ours = fetched.filter(Boolean);
         if (!ours.length) throw new Error('aucun addon n’a répondu');
 
-        const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_COLLECTIONS;
+        const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_FR_SANS_NOTES || a.transportUrl === TMDB_COLLECTIONS;
         const ourUrls = new Set(ours.map((a) => a.transportUrl));
         // Même lot d'addons sur chaque profil ; « garder mes addons » s'applique à chacun séparément
         for (const t of targets) {

@@ -12,7 +12,7 @@ async function compter(kv) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
-  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [] } = await request.json().catch(() => ({}));
+  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [], notes = true } = await request.json().catch(() => ({}));
 
   const debrid = Object.entries({ alldebrid, torbox }).filter(([, key]) => key);
   if (!debrid.length) return fail('il faut au moins une clé AllDebrid ou TorBox');
@@ -35,7 +35,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const problem = await checkDebrid(service, key);
     if (problem) return fail(problem);
   }
-  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip });
+  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip, notes: notes !== false });
   // Compté ici (clé debrid déjà vérifiée) : impossible de gonfler le chiffre sans vraie clé
   if (env.COMPTEUR) waitUntil(compter(env.COMPTEUR).catch(() => {}));
   return Response.json({ addons });
