@@ -4,7 +4,13 @@ compatibility_date = "2026-10-01"
 # Buffer (encodage base64 des configs d'addons)
 compatibility_flags = ["nodejs_compat"]
 
-# Compteur d'installations : un seul nombre (functions/api/compteur.js)
+# Ancien compteur d'installations : lu une seule fois pour reprendre le chiffre dans D1 (lib/compteur.js)
 [[kv_namespaces]]
 binding = "COMPTEUR"
 id = "27acaec41dc346d2ad89b0b5732cfee5"
+
+# Compteur d'installations (lib/compteur.js) et limite d'essais (lib/limite.js)
+[[d1_databases]]
+binding = "DB"
+database_name = "fr-bootstrapper-limite"
+database_id = "2a64bfea-01b6-416b-a8d6-d150f57db13f"

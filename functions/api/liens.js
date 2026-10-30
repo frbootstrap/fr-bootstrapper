@@ -1,19 +1,15 @@
 // Fabrique les liens d'addons. Rien n'est enregistré : les clés servent le temps de la requête.
 import { buildLinks, checkDebrid, tmdbKeys, TRACKERS } from '../../lib/addons.js';
 import { tooMany, TROP } from '../../lib/limite.js';
+import { compter } from '../../lib/compteur.js';
 
 const NAMES = { alldebrid: 'AllDebrid', torbox: 'TorBox' };
 const isKey = (key) => typeof key === 'string' && /^[A-Za-z0-9_.-]{8,256}$/.test(key);
 const isManifest = (url) => typeof url === 'string' && /^https:\/\/[^\s]+\/manifest\.json$/.test(url);
 const fail = (error) => Response.json({ error }, { status: 400 });
 
-// shortcut: lire puis écrire n'est pas atomique, deux installations au même instant peuvent compter pour une ; passer à D1 si le chiffre doit être exact
-async function compter(kv) {
-  await kv.put('installations', String((Number(await kv.get('installations')) || 0) + 1));
-}
-
 export async function onRequestPost({ request, env, waitUntil }) {
-  if (await tooMany(env.LIMITE, request.headers.get('CF-Connecting-IP'))) return Response.json({ error: TROP }, { status: 429 });
+  if (await tooMany(env.DB, request.headers.get('CF-Connecting-IP'))) return Response.json({ error: TROP }, { status: 429 });
   const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [], notes = true } = await request.json().catch(() => ({}));
 
   const debrid = Object.entries({ alldebrid, torbox }).filter(([, key]) => key);
@@ -39,6 +35,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
   const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip, notes: notes !== false });
   // Compté ici (clé debrid déjà vérifiée) : impossible de gonfler le chiffre sans vraie clé
-  if (env.COMPTEUR) waitUntil(compter(env.COMPTEUR).catch(() => {}));
+  if (env.DB) waitUntil(compter(env.DB, env.COMPTEUR).catch((err) => console.error('compteur :', err.message)));
   return Response.json({ addons });
 }

@@ -1,4 +1,4 @@
-// Limite d'essais avec une fausse base D1 (SQLite de Node, même SQL que Cloudflare)
+// Limite d'essais et compteur avec une fausse base D1 (SQLite de Node, même SQL que Cloudflare)
 const test = require('node:test');
 const assert = require('node:assert');
 const { DatabaseSync } = require('node:sqlite');
@@ -26,4 +26,13 @@ test('limite : sans base ou base en panne, on laisse passer', async () => {
   assert.strictEqual(await tooMany(undefined, '1.2.3.4'), false);
   const broken = { exec: async () => { throw new Error('panne'); } };
   assert.strictEqual(await tooMany(broken, '1.2.3.4'), false);
+});
+
+test('compteur : reprend le chiffre de l’ancien KV, puis +1 exact même en parallèle', async () => {
+  const { compter, lire } = require('../lib/compteur');
+  const db = fakeD1();
+  const kv = { get: async () => '283' };
+  assert.strictEqual(await lire(db, kv), 283);
+  await Promise.all(Array.from({ length: 5 }, () => compter(db, kv)));
+  assert.strictEqual(await lire(db, kv), 288);
 });
