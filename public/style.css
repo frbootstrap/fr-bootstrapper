@@ -193,6 +193,8 @@ details.more[open] { display: flex; flex-direction: column; gap: 14px; }
 .btn-primary { background: var(--accent); color: var(--ink); border-radius: 999px; padding: 0 36px; font-weight: 800; font-size: 17px; }
 .btn-ghost { background: none; color: var(--dim); padding: 0 8px; }
 .btn-big { width: 100%; min-height: 60px; font-size: 18px; }
+.undo { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.undo[hidden] { display: none; }
 
 .nav { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
 .nav .btn-primary { margin-left: auto; }

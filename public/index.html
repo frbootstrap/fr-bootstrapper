@@ -144,6 +144,10 @@
         <button class="btn btn-primary btn-big" type="submit" id="install-btn">Installer les addons</button>
         <ul class="install-log" id="install-log" aria-live="polite"></ul>
         <div class="form-warning" id="accounts" hidden></div>
+        <div class="undo" id="undo" hidden>
+          <button class="btn" type="button" id="undo-btn">Annuler : remettre mes anciens addons</button>
+          <button class="btn btn-ghost" type="button" id="backup-btn">Télécharger ma liste d’avant</button>
+        </div>
       </section>
 
       <p class="step-error" id="step-error" role="alert"></p>
@@ -208,6 +212,10 @@
     const btn = document.getElementById('install-btn');
     const log = document.getElementById('install-log');
     const accounts = document.getElementById('accounts');
+    const undoBox = document.getElementById('undo');
+    // Liste d'avant le PREMIER passage ici (par compte et profil) : réinstaller plusieurs fois n'écrase pas la sauvegarde
+    const before = new Map();
+    let undo = null; // dernier passage : { api, token, written: [{ id, name, key }] }
 
     const trackerField = ([id, name, url]) =>
       `<div class="field"><label for="trk_${id}">Clé API ${name}</label><div class="row"><input id="trk_${id}" type="text" name="trk_${id}" spellcheck="false" autocomplete="off" />` +
@@ -320,12 +328,12 @@
       async get(token, profile = 1) {
         const r = await fetch(`${NUVIO_API}/rest/v1/addons?select=*&profile_id=eq.${profile}&order=sort_order`, { headers: nuvio.headers(token) });
         if (!r.ok) throw new Error(`lecture des addons refusée (${r.status})`);
-        return (await r.json()).map((a) => ({ transportUrl: a.url, manifest: { name: a.name } }));
+        return (await r.json()).map((a) => ({ transportUrl: a.url, manifest: { name: a.name }, enabled: a.enabled }));
       },
       async set(token, addons, profile = 1) {
         await postJson(`${NUVIO_API}/rest/v1/rpc/sync_push_addons`, {
           p_profile_id: profile,
-          p_addons: addons.map((a, i) => ({ url: a.transportUrl, name: a.manifest?.name || 'Addon', enabled: true, sort_order: i })),
+          p_addons: addons.map((a, i) => ({ url: a.transportUrl, name: a.manifest?.name || 'Addon', enabled: a.enabled !== false, sort_order: i })),
         }, nuvio.headers(token));
       },
     };
@@ -601,6 +609,8 @@
       }
       log.innerHTML = '';
       accounts.hidden = true;
+      undoBox.hidden = true;
+      undo = null;
       const platform = form.platform.value;
       const api = platform === 'nuvio' ? nuvio : stremio;
       const email = form.email.value.trim();
@@ -679,14 +689,18 @@
         const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_FR_SANS_NOTES || a.transportUrl === TMDB_COLLECTIONS;
         const ourUrls = new Set(ours.map((a) => a.transportUrl));
         // Même lot d'addons sur chaque profil ; « garder mes addons » s'applique à chacun séparément
+        undo = { api, token, written: [] };
         for (const t of targets) {
           const tSend = performance.now();
           const current = await api.get(token, t.id);
+          const key = `${platform}|${authKey || email}|${t.id}`;
+          if (!before.has(key)) before.set(key, current);
           // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
           const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
           const urls = new Set([...pinned, ...ours].map((a) => a.transportUrl));
           const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
           await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept], t.id);
+          undo.written.push({ id: t.id, name: t.name, key });
           line(`Envoi à l’appli${t.name ? ` (profil ${t.name})` : ''} : ${msTxt(tSend)}`, t.name ? 'ok' : '');
         }
 
@@ -697,8 +711,37 @@
         line(`Échec : ${err.message}. Vérifie tes identifiants puis réessaie.`, 'ko');
       } finally {
         btn.disabled = false;
+        // Proposé même après un échec en cours de route, dès qu'un profil a été modifié
+        undoBox.hidden = !undo?.written.length;
         updateSummary();
       }
+    });
+
+    // Remet la liste d'avant telle quelle (Stremio : objets complets ; Nuvio : liens, noms, activé ou non)
+    document.getElementById('undo-btn').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      try {
+        for (const t of undo.written) {
+          await undo.api.set(undo.token, before.get(t.key), t.id);
+          line(`Anciens addons remis${t.name ? ` (profil ${t.name})` : ''}.`, 'ok');
+        }
+        undoBox.hidden = true;
+        line('Ferme complètement ton appli puis rouvre-la pour retrouver ta liste d’avant.', 'wait');
+      } catch (err) {
+        line(`Impossible de remettre tes anciens addons : ${err.message}. Télécharge ta liste d’avant pour la garder.`, 'ko');
+      }
+      e.target.disabled = false;
+    });
+    document.getElementById('backup-btn').addEventListener('click', () => {
+      const data = undo.written.map((t) => ({
+        profil: t.name || 'principal',
+        addons: before.get(t.key).map((a) => ({ nom: a.manifest?.name, lien: a.transportUrl })),
+      }));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = 'mes-addons-avant.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     });
   })();
 
