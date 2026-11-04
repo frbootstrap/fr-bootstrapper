@@ -127,11 +127,12 @@
         <p class="lead" id="install-lead"></p>
         <fieldset class="choice">
           <legend>Fiches et catalogues</legend>
-          <label class="chip"><input type="radio" name="meta" value="tmdb" checked /> <span class="stremio-only">Addon TMDB : fiches et catalogues en français</span><span class="nuvio-only" hidden>Catalogue FR : fiches, collections, accueil et affiches en français</span></label>
+          <label class="chip nuvio-only" hidden><input type="radio" name="meta" value="catfr" /> Catalogue FR : fiches, collections, accueil et affiches en français (conseillé)</label>
+          <label class="chip"><input type="radio" name="meta" value="tmdb" checked /> Addon TMDB : fiches et catalogues en français</label>
           <label class="chip"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul : en anglais</label>
         </fieldset>
         <p class="form-hint stremio-only">L’addon TMDB affiche les titres, résumés et affiches en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll. Cinemeta (l’addon de base de Stremio, en anglais) reste installé derrière, en secours.</p>
-        <p class="form-hint nuvio-only" hidden>Sur Nuvio, c’est le <a href="https://nuvio-assets.xnzxflix.workers.dev/configure" target="_blank" rel="noopener">Catalogue FR</a> qui s’installe : fiches en français, rangées d’accueil, collections (plateformes, genres, sagas…), ordre de l’accueil et affiches, tout d’un coup. Cinemeta (en anglais) reste installé tout en bas, en secours.</p>
+        <p class="form-hint nuvio-only" hidden>Sur Nuvio, le <a href="https://nuvio-assets.xnzxflix.workers.dev/configure" target="_blank" rel="noopener">Catalogue FR</a> installe tout d’un coup : fiches en français, rangées d’accueil, collections (plateformes, genres, sagas…), ordre de l’accueil et affiches. L’addon TMDB, lui, ne touche qu’aux addons : ton accueil reste comme il est. Dans tous les cas, Cinemeta (en anglais) reste installé tout en bas, en secours.</p>
         <div class="field nuvio-only" hidden>
           <label for="gemini">Ta clé Gemini <span class="opt">· facultatif</span></label>
           <input id="gemini" type="text" name="gemini" spellcheck="false" autocomplete="off" placeholder="AIza…" />
@@ -259,6 +260,9 @@
     form.platform.forEach((r) => r.addEventListener('change', () => {
       document.querySelectorAll('.stremio-only').forEach((el) => { el.hidden = form.platform.value !== 'stremio'; });
       document.querySelectorAll('.nuvio-only').forEach((el) => { el.hidden = form.platform.value !== 'nuvio'; });
+      // Catalogue FR = choix par défaut sous Nuvio ; il n'existe pas sous Stremio
+      if (form.platform.value === 'nuvio' && form.meta.value === 'tmdb') form.meta.value = 'catfr';
+      if (form.platform.value === 'stremio' && form.meta.value === 'catfr') form.meta.value = 'tmdb';
     }));
 
     async function postJson(url, body, headers = {}) {
@@ -664,11 +668,11 @@
       const k = {
         debrid: !!(form.adKey.value.trim() || form.tbKey.value.trim()),
         tmdb: /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim()),
-        meta: form.meta.value === 'tmdb',
+        meta: form.meta.value !== 'cinemeta',
         sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
         mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
       };
-      ADDONS[0].note = form.platform.value === 'nuvio' ? 'Catalogue FR' : 'titres, résumés';
+      ADDONS[0].note = form.meta.value === 'catfr' ? 'Catalogue FR' : 'titres, résumés';
       for (const a of ADDONS) {
         a.on = a.ok(k);
         a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
@@ -734,7 +738,7 @@
       const skip = ADDONS.filter((a) => a.off).map(idOf);
       // Catalogue FR (Nuvio) n'est pas dans la liste : -1, en tête ; Cinemeta (Nuvio) tout en bas
       const rank = (a) => (a.url === CINEMETA ? Infinity : order.findIndex((o) => idOf(o) === a.name));
-      const catfr = platform === 'nuvio' && form.meta.value === 'tmdb' && !skip.includes('TMDB (français)') ? catfrBase(form.gemini.value.trim()) : null;
+      const catfr = platform === 'nuvio' && form.meta.value === 'catfr' && !skip.includes('TMDB (français)') ? catfrBase(form.gemini.value.trim()) : null;
 
       btn.disabled = true;
       btn.textContent = 'Installation…';
