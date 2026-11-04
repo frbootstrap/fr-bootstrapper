@@ -668,7 +668,7 @@
         sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
         mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
       };
-      ADDONS[0].note = form.platform.value === 'nuvio' ? 'Catalogue FR, collections, affiches' : 'titres, résumés';
+      ADDONS[0].note = form.platform.value === 'nuvio' ? 'Catalogue FR' : 'titres, résumés';
       for (const a of ADDONS) {
         a.on = a.ok(k);
         a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
