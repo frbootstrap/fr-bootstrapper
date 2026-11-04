@@ -130,7 +130,13 @@
           <label class="chip"><input type="radio" name="meta" value="tmdb" checked /> Addon TMDB : fiches et catalogues en français</label>
           <label class="chip"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul : en anglais</label>
         </fieldset>
-        <p class="form-hint">L’addon TMDB affiche les titres, résumés et affiches en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll. Cinemeta (l’addon de base de Stremio, en anglais) reste installé derrière, en secours.</p>
+        <p class="form-hint stremio-only">L’addon TMDB affiche les titres, résumés et affiches en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll. Cinemeta (l’addon de base de Stremio, en anglais) reste installé derrière, en secours.</p>
+        <p class="form-hint nuvio-only" hidden>Sur Nuvio, c’est le <a href="https://nuvio-assets.xnzxflix.workers.dev/configure" target="_blank" rel="noopener">Catalogue FR</a> qui s’installe : fiches en français, rangées d’accueil, collections (plateformes, genres, sagas…), ordre de l’accueil et affiches, tout d’un coup. Cinemeta (en anglais) reste installé tout en bas, en secours.</p>
+        <div class="field nuvio-only" hidden>
+          <label for="gemini">Ta clé Gemini <span class="opt">· facultatif</span></label>
+          <input id="gemini" type="text" name="gemini" spellcheck="false" autocomplete="off" placeholder="AIza…" />
+          <p class="form-hint">Avec elle, le Catalogue FR ajoute des petits textes aux fiches (« pour qui », « à savoir »…). Gratuite, en 2 minutes sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Elle part seulement dans le lien de l’addon, chez toi.</p>
+        </div>
         <label class="check"><input type="checkbox" name="notes" checked /> Afficher les notes des films et séries sur les affiches</label>
         <p class="form-hint">Un petit bandeau avec les notes (IMDb, Rotten Tomatoes…) apparaît en bas de chaque affiche dans les catalogues. Décoche si tu préfères les affiches toutes simples.</p>
         <label class="check"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
@@ -194,6 +200,24 @@
     const TMDB_COLLECTIONS = 'https://61ab9c85a149-tmdb-collections.baby-beamup.club/%7B%22enableAdultContent%22%3Afalse%2C%22enableSearch%22%3Atrue%2C%22enableCollectionFromMovie%22%3Atrue%2C%22language%22%3A%22fr%22%2C%22catalogList%22%3A%5B%22popular%22%2C%22newReleases%22%2C%22topRated%22%2C%22topRatedByCountry%22%2C%22topRatedByCompany%22%5D%2C%22discoverOnly%22%3A%7B%22popular%22%3Atrue%2C%22newReleases%22%3Afalse%2C%22topRated%22%3Atrue%2C%22topRatedByCountry%22%3Atrue%2C%22topRatedByCompany%22%3Atrue%7D%7D/manifest.json';
     // Clé publique « anon » de l'appli Nuvio (présente dans chaque copie de l'appli) ; à reprendre si Nuvio la change
     const NUVIO_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNTIxMzQ2LCJleHAiOjE5MzkyMDEzNDZ9.tmQaj682pwzehpqlgCDMnySOqiUvpgRbrE43T4VJpDI';
+    // Catalogue FR pour Nuvio (addon de xnzx07) : réglages de Belouga, SANS sa clé Gemini ; celle de la personne va dans « k ».
+    // La config est le JSON en base64url dans le lien, comme sur sa page /configure.
+    const CATFR_CONF = {
+      n: 'Catalogue FR', r: [2, 1, 9, 4, 0], p: [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11], c: 205407,
+      o: { 1: 'Tendances · Films', 2: 'Tendances · Séries', 9: 'Tendances · Anime' },
+      x: [
+        { n: 'Le meilleur de Netflix', t: 2, w: [0], s: 1 }, { n: 'Le meilleur de Prime Video', t: 2, w: [1], s: 1 },
+        { n: 'Le meilleur de Disney+', t: 2, w: [2], s: 1 }, { n: 'séries comédie', t: 1, g: [3] }, { n: 'Films comédie', g: [3] },
+        { n: 'Récent · Séries', t: 1, s: 2 }, { n: 'Récent · Films', s: 2 },
+      ],
+      ca: 1, to: { 2: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 6: [8, 0, 1, 2, 3, 4, 5, 6, 7] }, tv: 2,
+    };
+    const catfrBase = (gemini) => 'https://nuvio-assets.xnzxflix.workers.dev/' + btoa(String.fromCharCode(
+      ...new TextEncoder().encode(JSON.stringify({ ...CATFR_CONF, ...(gemini && { k: gemini }) })),
+    )).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // Affiches du Catalogue FR au style de Belouga (le code « Q0Hv » contient les réglages, rien n'est stocké chez lui)
+    const CATFR_AFFICHES = 'https://affiches.xnzxflix.workers.dev/perso/Q0Hv/{type}/{shape}/{id}.jpg';
+    const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
     // Trackers proposés (même liste que lib/addons.js) : [champ, nom affiché]
     // [id, nom, page de la clé API, inscriptions ouvertes] ; liens relevés sur la page de configuration de Stream-Fusion
     const TRACKERS = [
@@ -233,8 +257,8 @@
     };
 
     form.platform.forEach((r) => r.addEventListener('change', () => {
-      document.querySelector('.stremio-only').hidden = form.platform.value !== 'stremio';
-      document.querySelector('.nuvio-only').hidden = form.platform.value !== 'nuvio';
+      document.querySelectorAll('.stremio-only').forEach((el) => { el.hidden = form.platform.value !== 'stremio'; });
+      document.querySelectorAll('.nuvio-only').forEach((el) => { el.hidden = form.platform.value !== 'nuvio'; });
     }));
 
     async function postJson(url, body, headers = {}) {
@@ -336,7 +360,78 @@
           p_addons: addons.map((a, i) => ({ url: a.transportUrl, name: a.manifest?.name || 'Addon', enabled: a.enabled !== false, sort_order: i })),
         }, nuvio.headers(token));
       },
+      rpc: (token, profile, name, body) => postJson(`${NUVIO_API}/rest/v1/rpc/${name}`, { p_profile_id: profile, ...body }, nuvio.headers(token)),
     };
+    const firstRow = (d, field) => (Array.isArray(d) && d[0] && d[0][field]) || null;
+
+    // Ordre de l'accueil Nuvio : le nôtre d'abord, puis le reste de la personne (repris de la page du Catalogue FR)
+    function homeItems(old, ordre, addon) {
+      const key = (it) => (it.is_collection ? `c:${it.collection_id}` : `${it.addon_id}/${it.type}/${it.catalog_id}`);
+      const prev = (Array.isArray(old) ? old : []).filter((it) => it && typeof it === 'object').sort((a, b) => (a.order || 0) - (b.order || 0));
+      const byKey = new Map(prev.map((it) => [key(it), it]));
+      const ours = ordre.map((o) => (o.collection
+        ? { addon_id: '', type: '', catalog_id: '', is_collection: true, collection_id: o.collection }
+        : { addon_id: addon, type: o.type, catalog_id: o.id, is_collection: false, collection_id: '' }));
+      const ourKeys = new Set(ours.map(key));
+      return [
+        ...ours.map((it) => ({ ...it, enabled: true, custom_title: byKey.get(key(it))?.custom_title || '' })),
+        ...prev.filter((it) => !ourKeys.has(key(it))),
+      ].map((it, order) => ({
+        addon_id: it.addon_id || '', type: it.type || '', catalog_id: it.catalog_id || '', enabled: it.enabled !== false, order,
+        custom_title: it.custom_title || '', is_collection: !!it.is_collection, collection_id: it.collection_id || '',
+      }));
+    }
+
+    // Le reste du Catalogue FR (comme son bouton « Tout envoyer dans Nuvio ») : collections, ordre de l'accueil, affiches.
+    // Une partie qui échoue n'empêche pas les autres. Renvoie ce qu'il y avait avant, pour « Annuler ».
+    async function catfrExtras(token, profile, base, label) {
+      const rpc = (name, body) => nuvio.rpc(token, profile, name, body);
+      const was = { blobs: {} };
+      const part = async (what, fn) => {
+        try { line(`${what}${label} : ${await fn()}`, 'ok'); } catch (err) { line(`${what}${label} : pas envoyé (${err.message})`, 'ko'); }
+      };
+      await part('Collections', async () => {
+        const ours = await (await fetch(`${base}/collections.json`, { signal: AbortSignal.timeout(15000) })).json();
+        if (!Array.isArray(ours) || !ours.length) throw new Error('le Catalogue FR n’a renvoyé aucune collection');
+        const old = firstRow(await rpc('sync_pull_collections', {}), 'collections_json') || [];
+        was.collections = old;
+        const ids = new Set(ours.map((c) => c.id));
+        const mine = old.filter((c) => c && !ids.has(c.id)); // celles faites par la personne restent
+        await rpc('sync_push_collections', { p_collections_json: [...ours, ...mine] });
+        return `${ours.length} installées${mine.length ? `, tes ${mine.length} à toi gardées` : ''}`;
+      });
+      await part('Ordre de l’accueil', async () => {
+        const a = await (await fetch(`${base}/accueil.json`, { signal: AbortSignal.timeout(15000) })).json();
+        if (!Array.isArray(a?.ordre) || !a.addon) throw new Error('le Catalogue FR n’a pas renvoyé d’ordre');
+        const old = firstRow(await rpc('sync_pull_home_catalog_settings', { p_platform: 'home_catalog_shared' }), 'settings_json') || {};
+        was.home = old;
+        await rpc('sync_push_home_catalog_settings', { p_platform: 'home_catalog_shared', p_settings_json: { ...old, items: homeItems(old.items, a.ordre, a.addon) } });
+        return 'installé';
+      });
+      await part('Affiches', async () => {
+        const done = [];
+        // Chaque appareil range ses réglages à part ; la TV met le lien dans layout_settings, le PC et le téléphone à la racine
+        for (const [platform, name] of [['tv', 'la TV'], ['desktop', 'le PC'], ['mobile', 'le téléphone']]) {
+          const s = firstRow(await rpc('sync_pull_profile_settings_blob', { p_platform: platform }), 'settings_json');
+          if (!s || !s.features || typeof s.features !== 'object') continue; // jamais relié au compte : on n'écrase pas ses réglages
+          was.blobs[platform] = s;
+          const features = platform === 'tv'
+            ? { ...s.features, layout_settings: { ...s.features.layout_settings, custom_poster_url_pattern: { type: 'string', value: CATFR_AFFICHES } } }
+            : { ...s.features, custom_poster_url_pattern: CATFR_AFFICHES };
+          await rpc('sync_push_profile_settings_blob', { p_platform: platform, p_settings_json: { ...s, features } });
+          done.push(name);
+        }
+        if (!done.length) throw new Error('aucun appareil n’a encore ouvert Nuvio avec ce compte : ouvre Nuvio une fois connecté, puis repasse ici');
+        return done.join(', ');
+      });
+      return was;
+    }
+    async function catfrUndo(token, profile, was) {
+      const rpc = (name, body) => nuvio.rpc(token, profile, name, body);
+      if (was.collections) await rpc('sync_push_collections', { p_collections_json: was.collections });
+      if (was.home) await rpc('sync_push_home_catalog_settings', { p_platform: 'home_catalog_shared', p_settings_json: was.home });
+      for (const [platform, s] of Object.entries(was.blobs)) await rpc('sync_push_profile_settings_blob', { p_platform: platform, p_settings_json: s });
+    }
 
     // Liste des profils Nuvio : textes venus de Nuvio posés en textContent (pas d'injection)
     const profilesList = document.getElementById('profiles');
@@ -573,6 +668,7 @@
         sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
         mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
       };
+      ADDONS[0].note = form.platform.value === 'nuvio' ? 'Catalogue FR, collections, affiches' : 'titres, résumés';
       for (const a of ADDONS) {
         a.on = a.ok(k);
         a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
@@ -636,7 +732,9 @@
       const lockedNoPin = targets.find((t) => t.pin != null && t.pin.length !== 4);
       if (lockedNoPin) return line(`Le profil ${lockedNoPin.name} a un PIN : tape ses 4 chiffres à côté de son nom (onglet « Ton appli »).`, 'ko');
       const skip = ADDONS.filter((a) => a.off).map(idOf);
-      const rank = (a) => order.findIndex((o) => idOf(o) === a.name); // Cinemeta (Nuvio) n'est pas dans la liste : -1, en tête
+      // Catalogue FR (Nuvio) n'est pas dans la liste : -1, en tête ; Cinemeta (Nuvio) tout en bas
+      const rank = (a) => (a.url === CINEMETA ? Infinity : order.findIndex((o) => idOf(o) === a.name));
+      const catfr = platform === 'nuvio' && form.meta.value === 'tmdb' && !skip.includes('TMDB (français)') ? catfrBase(form.gemini.value.trim()) : null;
 
       btn.disabled = true;
       btn.textContent = 'Installation…';
@@ -660,10 +758,12 @@
         const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, skip, notes: form.notes.checked });
         const msTxt = (t) => `${Math.round(performance.now() - t)} ms`;
         line(`Liens fabriqués en ${msTxt(tLinks)}`);
-        // Nuvio n'a pas Cinemeta d'office (Stremio, si) : sans lui, pas de catalogue ni de fiches
-        if (platform === 'nuvio') links.addons.unshift({ name: 'Cinemeta', url: 'https://v3-cinemeta.strem.io/manifest.json' });
+        // Nuvio n'a pas Cinemeta d'office (Stremio, si) : il reste en secours, tout en bas (choix de Belouga)
+        if (platform === 'nuvio') links.addons.push({ name: 'Cinemeta', url: CINEMETA });
         if (!skip.includes('TMDB Collections')) links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
-        if (form.meta.value === 'tmdb' && !skip.includes('TMDB (français)')) links.addons.unshift({ name: 'TMDB (français)', url: form.notes.checked ? TMDB_FR : TMDB_FR_SANS_NOTES });
+        // Fiches en français : addon TMDB sur Stremio, Catalogue FR sur Nuvio
+        if (catfr) links.addons.unshift({ name: 'Catalogue FR', url: `${catfr}/manifest.json` });
+        else if (form.meta.value === 'tmdb' && !skip.includes('TMDB (français)')) links.addons.unshift({ name: 'TMDB (français)', url: form.notes.checked ? TMDB_FR : TMDB_FR_SANS_NOTES });
         links.addons.sort((a, b) => rank(a) - rank(b));
         const fetched = await Promise.all(links.addons.map(async (a) => {
           if (a.error) {
@@ -686,7 +786,8 @@
         const ours = fetched.filter(Boolean);
         if (!ours.length) throw new Error('aucun addon n’a répondu');
 
-        const isTmdb = (a) => a.transportUrl === TMDB_FR || a.transportUrl === TMDB_FR_SANS_NOTES || a.transportUrl === TMDB_COLLECTIONS;
+        const isTmdb = (a) => [TMDB_FR, TMDB_FR_SANS_NOTES, TMDB_COLLECTIONS, catfr && `${catfr}/manifest.json`].includes(a.transportUrl);
+        const isCinemeta = (a) => platform === 'nuvio' && a.transportUrl === CINEMETA;
         const ourUrls = new Set(ours.map((a) => a.transportUrl));
         // Même lot d'addons sur chaque profil ; « garder mes addons » s'applique à chacun séparément
         undo = { api, token, written: [] };
@@ -699,9 +800,13 @@
           const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
           const urls = new Set([...pinned, ...ours].map((a) => a.transportUrl));
           const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
-          await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a)), ...kept], t.id);
+          await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a) && !isCinemeta(a)), ...kept, ...ours.filter(isCinemeta)], t.id);
           undo.written.push({ id: t.id, name: t.name, key });
           line(`Envoi à l’appli${t.name ? ` (profil ${t.name})` : ''} : ${msTxt(tSend)}`, t.name ? 'ok' : '');
+          if (catfr && ourUrls.has(`${catfr}/manifest.json`)) {
+            const was = await catfrExtras(token, t.id, catfr, t.name ? ` (profil ${t.name})` : '');
+            if (!before.has(`${key}|catfr`)) before.set(`${key}|catfr`, was);
+          }
         }
 
         showAccounts(links.addons.filter((a) => ourUrls.has(a.url)));
@@ -723,6 +828,8 @@
       try {
         for (const t of undo.written) {
           await undo.api.set(undo.token, before.get(t.key), t.id);
+          // Catalogue FR : collections, ordre de l'accueil et affiches d'avant
+          if (before.has(`${t.key}|catfr`)) await catfrUndo(undo.token, t.id, before.get(`${t.key}|catfr`));
           line(`Anciens addons remis${t.name ? ` (profil ${t.name})` : ''}.`, 'ok');
         }
         undoBox.hidden = true;
