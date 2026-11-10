@@ -292,6 +292,10 @@ footer { max-width: 1280px; margin: 0 auto; padding: calc(var(--u) * 4) calc(var
   font: 600 14px Figtree, system-ui, sans-serif;
 }
 .profiles li select:focus, .kid-new select:focus { outline: none; border-color: var(--accent); }
-.kid-new { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.kid-new { display: flex; flex-direction: column; gap: 8px; }
+.kids { display: flex; flex-direction: column; gap: 10px; padding: 20px 22px; border-radius: 16px; background: var(--soft); }
+.kids .sub { margin: 0; }
+.kids > div { display: flex; flex-direction: column; gap: 10px; }
+.kids > div[hidden] { display: none; }
 .kid-new[hidden], .kid-new .row[hidden] { display: none; }
 .kid-new select { height: 56px; }

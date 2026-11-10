@@ -56,14 +56,6 @@
           <button class="btn" type="button" id="load-profiles">Voir mes profils Nuvio</button>
           <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer, et dis lesquels sont pour un enfant. Sinon, on installe sur ton profil principal.</p>
           <ul class="profiles" id="profiles"></ul>
-          <div class="kid-new" id="kid-new" hidden>
-            <label class="check"><input type="checkbox" id="kid-create" /> Créer un nouveau profil Jeunesse</label>
-            <div class="row" id="kid-fields" hidden>
-              <input id="kid-name" type="text" value="Jeunesse" maxlength="20" aria-label="Nom du nouveau profil" />
-              <select id="kid-age" aria-label="Âge de l’enfant"></select>
-            </div>
-            <p class="form-hint">Un profil Jeunesse reçoit l’addon Jeunesse FR : accueil, collections (genres, studios, chaînes), recherche et fiches en français. Il ne montre que les titres classés officiellement (France, sinon États-Unis) sous l’âge choisi, sans horreur ni guerre ; un titre sans classification est écarté. Aucun autre catalogue ni recherche sur ce profil. Les liens restent les mêmes. Il faut ta clé TMDB (onglet « Ta clé TMDB », gratuite). Conseil : dans Nuvio, mets un PIN sur les profils adultes, sinon l’enfant peut y passer.</p>
-          </div>
         </div>
       </section>
 
@@ -134,6 +126,25 @@
       <section class="step" data-step="4" hidden>
         <h1>C’est parti</h1>
         <p class="lead" id="install-lead"></p>
+        <div class="kids" id="kids">
+          <h2 class="sub">Pour les enfants <span class="opt">· facultatif</span></h2>
+          <div class="stremio-only">
+            <label class="check"><input type="checkbox" id="kids-stremio" /> Ajouter une catégorie Jeunesse à mon accueil</label>
+            <p class="form-hint">Stremio n’a pas de profils : on ajoute simplement 3 rangées à ton accueil (Dessins animés, Séries pour enfants, À voir en famille), au milieu des autres. Le reste de Stremio n’est pas filtré. Pour un vrai espace enfant, il faut Nuvio et ses profils.</p>
+          </div>
+          <div class="nuvio-only" hidden>
+            <div class="kid-new" id="kid-new">
+              <label class="check"><input type="checkbox" id="kid-create" /> Créer un profil Jeunesse pour un enfant</label>
+              <div class="row" id="kid-fields" hidden>
+                <input id="kid-name" type="text" value="Jeunesse" maxlength="20" aria-label="Nom du nouveau profil" />
+                <select id="kid-age" aria-label="Âge de l’enfant"></select>
+              </div>
+            </div>
+            <p class="form-hint">Un profil à part, comme sur Netflix, avec l’addon Jeunesse FR : accueil, collections (genres, studios, chaînes), recherche et fiches pour enfants. Seuls les titres classés officiellement sous l’âge choisi apparaissent, sans horreur ; aucun autre catalogue ni recherche sur ce profil. Les liens restent les mêmes. Conseil : dans Nuvio, mets un PIN sur les profils adultes.</p>
+            <p class="form-hint" id="kid-tmdb">Il faut ta clé TMDB (gratuite) : onglet « Ta clé TMDB ».</p>
+            <p class="form-hint">Ton enfant a déjà son profil&nbsp;? Onglet « Ton appli » → « Voir mes profils Nuvio » → choisis son âge à côté de son nom.</p>
+          </div>
+        </div>
         <fieldset class="choice">
           <legend>Fiches et catalogues</legend>
           <label class="chip nuvio-only" hidden><input type="radio" name="meta" value="catfr" /> Catalogue FR : fiches, collections, accueil et affiches en français (conseillé)</label>
@@ -560,11 +571,12 @@
         }));
         // Un seul profil sans PIN : rien à choisir, on installe sur le principal comme avant
         profilesLoaded = list.length > 1 || !!list[0]?.pin_enabled;
-        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil d’enfant : choisis son âge, il aura l’addon Jeunesse FR (accueil, recherche et fiches pour enfants) avec les mêmes addons de liens ; il faut ta clé TMDB. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
+        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil d’enfant : choisis son âge à côté de son nom (il aura l’addon Jeunesse FR, voir « Pour les enfants » à l’étape Installer). Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
           : list.length ? `Un seul profil (${list[0].name}) : on installe dessus.` : 'Aucun profil trouvé : on installe sur ton profil principal.';
         if (!profilesLoaded) profilesList.replaceChildren();
         // Nuvio : 6 profils au plus
         kidNew.hidden = list.length >= 6;
+        if (kidNew.hidden) kidCreate.checked = false;
       } catch (err) {
         profilesHint.textContent = `✗ ${err.message}`;
       }
@@ -574,9 +586,7 @@
     [form.email, form.password].forEach((f) => f.addEventListener('input', () => {
       profilesLoaded = false;
       profilesList.replaceChildren();
-      kidNew.hidden = true;
-      kidCreate.checked = false;
-      kidFields.hidden = true;
+      kidNew.hidden = false;
     }));
 
     // Identifiants des comptes créés chez WaCustom / Stream-Fusion : affichés une seule fois
@@ -748,6 +758,8 @@
     });
 
     let catWas = false;
+    const kidsStremio = document.getElementById('kids-stremio');
+    kidsStremio.addEventListener('change', () => { ADDONS[2].off = !kidsStremio.checked; updateSummary(); });
     function updateSummary() {
       const has = (id) => !!form[`trk_${id}`].value.trim();
       const k = {
@@ -766,6 +778,12 @@
         a.on = a.ok(k);
         a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
       }
+      kidsStremio.checked = !ADDONS[2].off;
+      // Profil Jeunesse sans clé TMDB : on le dit tout de suite, en rouge
+      const kidTmdb = document.getElementById('kid-tmdb');
+      kidTmdb.style.color = kidCreate.checked && !k.tmdb ? 'var(--danger)' : '';
+      kidTmdb.textContent = kidCreate.checked && !k.tmdb ? '✗ Il faut ta clé TMDB (gratuite) pour le profil Jeunesse : onglet « Ta clé TMDB ».'
+        : k.tmdb ? '✓ Clé TMDB fournie : le profil Jeunesse est possible.' : 'Il faut ta clé TMDB (gratuite) : onglet « Ta clé TMDB ».';
       const n = order.filter((r) => r.on && !r.off).length;
       // Tout se déplace, même verrouillé ; la case n'apparaît qu'une fois l'addon disponible
       list.innerHTML = order.map((r) => {
