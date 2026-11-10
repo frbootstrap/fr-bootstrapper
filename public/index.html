@@ -602,7 +602,7 @@
     const ADDONS = [
       { name: 'Fiches en français', id: 'TMDB (français)', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
       { name: 'Collections', id: 'TMDB Collections', note: 'sagas', ok: () => true, free: true },
-      { name: 'Jeunesse', id: 'Catalogue FR Jeunesse', note: 'rangées enfants', ok: () => true, free: true, off: true },
+      { name: 'Jeunesse', id: 'Catalogue FR Jeunesse', note: '3 rangées enfants', offNote: '3 rangées enfants', ok: () => true, free: true, off: true },
       { name: 'Lumio', ok: (k) => k.debrid },
       { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
@@ -841,7 +841,7 @@
         // Profil d'enfant (Nuvio) : Catalogue FR « Famille » à son âge, à la place des fiches ; un même âge = un même lien
         const kidFor = async (age) => {
           const base = catfrUrl({ ...CATFR_ENFANTS, f: age }, gemini);
-          const kid = await fetchOne({ name: 'Catalogue FR', url: `${base}/manifest.json` });
+          const kid = await fetchOne({ name: 'Catalogue FR Enfants', url: `${base}/manifest.json` });
           return kid.failed ? null : { ...kid, base };
         };
         const kids = new Map();
@@ -849,7 +849,7 @@
         for (const t of targets) t.kid = t.age ? kids.get(t.age) : undefined;
 
         // Écrit la liste sur chaque profil ; resservira tel quel pour « Réessayer » (got aura grandi)
-        const FICHES = ['Catalogue FR', 'TMDB (français)', 'TMDB Collections'];
+        const FICHES = ['Catalogue FR', 'Catalogue FR Enfants', 'TMDB (français)', 'TMDB Collections'];
         const write = async () => {
           for (const t of targets) {
             if (t.kid === null) {
