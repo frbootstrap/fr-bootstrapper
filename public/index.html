@@ -62,7 +62,7 @@
               <input id="kid-name" type="text" value="Jeunesse" maxlength="20" aria-label="Nom du nouveau profil" />
               <select id="kid-age" aria-label="Âge de l’enfant"></select>
             </div>
-            <p class="form-hint">Un profil Jeunesse n’a que des fiches et des rangées pour enfants (dessins animés, films famille, rien qui fait peur), filtrées selon son âge avec la classification française : pas de Cinemeta ni d’autre catalogue, donc presque rien d’adulte à l’accueil comme dans la recherche. Ce n’est pas un contrôle parental parfait : un titre sans classification en France (souvent obscur) peut passer. Les liens restent les mêmes. Conseil : dans Nuvio, mets un PIN sur les profils adultes, sinon l’enfant peut y passer.</p>
+            <p class="form-hint">Un profil Jeunesse reçoit l’addon Jeunesse FR : accueil, collections (genres, studios, chaînes), recherche et fiches en français. Il ne montre que les titres classés officiellement (France, sinon États-Unis) sous l’âge choisi, sans horreur ni guerre ; un titre sans classification est écarté. Aucun autre catalogue ni recherche sur ce profil. Les liens restent les mêmes. Il faut ta clé TMDB (onglet « Ta clé TMDB », gratuite). Conseil : dans Nuvio, mets un PIN sur les profils adultes, sinon l’enfant peut y passer.</p>
           </div>
         </div>
       </section>
@@ -95,6 +95,7 @@
         <p class="lead">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
         <div class="unlocks">
           <div><strong>WaCustom</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
+          <div><strong>Jeunesse FR</strong><span>Les profils enfants sur Nuvio : accueil, recherche et fiches filtrés par âge.</span></div>
         </div>
         <div class="field">
           <label for="tmdb">Jeton d’accès en lecture TMDB</label>
@@ -235,13 +236,11 @@
       ...new TextEncoder().encode(JSON.stringify({ ...conf, ...(gemini && { k: gemini }) })),
     )).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     const catfrBase = (gemini) => catfrUrl(CATFR_CONF, gemini);
-    // Programmation « Famille » du Catalogue FR (sa recette toute prête, compactée comme le fait sa page) :
-    // dessins animés, films famille, aventures, séries enfants, pas d'horreur ; f = âge du plus jeune (1 = 10 ans et +)
-    const CATFR_ENFANTS = {
-      n: 'Catalogue FR Enfants', r: [0, 'p0', 10, 'p1', 1, 'p2', 3, 12],
-      x: [{ n: 'Dessins animés', t: 2, g: [2] }, { n: 'Grandes aventures', g: [1] }, { n: 'Séries pour les enfants', t: 1, g: [18] }], e: [10],
-    };
-    const AGES = [[6, 'Enfant · moins de 10 ans'], [1, 'Enfant · 10 ans et +'], [12, 'Ado · 12 ans et +'], [16, 'Ado · 16 ans et +']];
+    // Âges du profil Jeunesse : seuls les titres classés strictement sous cet âge (voir lib/jeunesse.js)
+    const AGES = [[7, 'Enfant · moins de 7 ans'], [10, 'Enfant · moins de 10 ans'], [12, 'Ado · moins de 12 ans'], [16, 'Ado · moins de 16 ans']];
+    const b64url = (o) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // Notre addon, servi par ce site ; le jeton TMDB de la personne est dans le lien (comme pour WaCustom)
+    const jeunesseBase = (tmdb, age) => `${location.origin}/jeunesse/${b64url({ t: tmdb, a: age })}`;
     // Pour Stremio (pas de profils) : 3 rangées seulement sur l'accueil, Dessins animés, Séries pour les enfants, À voir en famille
     const CATFR_JEUNESSE = {
       n: 'Catalogue FR Jeunesse', r: ['p0', 'p1', 10],
@@ -447,7 +446,8 @@
 
     // Le reste du Catalogue FR (comme son bouton « Tout envoyer dans Nuvio ») : collections, ordre de l'accueil, affiches.
     // Une partie qui échoue n'empêche pas les autres. Renvoie ce qu'il y avait avant, pour « Annuler ».
-    async function catfrExtras(token, profile, base, label) {
+    // kid : profil Jeunesse → collections remplacées par les nôtres (aucune ne doit lire TMDB sans filtre), affiches inchangées
+    async function catfrExtras(token, profile, base, label, kid = false) {
       const rpc = (name, body) => nuvio.rpc(token, profile, name, body);
       const was = { blobs: {} };
       const part = async (what, fn) => {
@@ -459,7 +459,7 @@
         const old = firstRow(await rpc('sync_pull_collections', {}), 'collections_json') || [];
         was.collections = old;
         const ids = new Set(ours.map((c) => c.id));
-        const mine = old.filter((c) => c && !ids.has(c.id)); // celles faites par la personne restent
+        const mine = kid ? [] : old.filter((c) => c && !ids.has(c.id)); // celles faites par la personne restent (sauf profil Jeunesse)
         await rpc('sync_push_collections', { p_collections_json: [...ours, ...mine] });
         return `${ours.length} installées${mine.length ? `, tes ${mine.length} à toi gardées` : ''}`;
       });
@@ -471,6 +471,7 @@
         await rpc('sync_push_home_catalog_settings', { p_platform: 'home_catalog_shared', p_settings_json: { ...old, items: homeItems(old.items, a.ordre, a.addon) } });
         return 'installé';
       });
+      if (kid) return was;
       await part('Affiches', async () => {
         const done = [];
         // Chaque appareil range ses réglages à part ; la TV met le lien dans layout_settings, le PC et le téléphone à la racine
@@ -558,7 +559,7 @@
         }));
         // Un seul profil sans PIN : rien à choisir, on installe sur le principal comme avant
         profilesLoaded = list.length > 1 || !!list[0]?.pin_enabled;
-        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil d’enfant : choisis son âge, il aura un accueil jeunesse (dessins animés, films famille, rien qui fait peur) avec les mêmes addons de liens. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
+        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil d’enfant : choisis son âge, il aura l’addon Jeunesse FR (accueil, recherche et fiches pour enfants) avec les mêmes addons de liens ; il faut ta clé TMDB. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
           : list.length ? `Un seul profil (${list[0].name}) : on installe dessus.` : 'Aucun profil trouvé : on installe sur ton profil principal.';
         if (!profilesLoaded) profilesList.replaceChildren();
         // Nuvio : 6 profils au plus
@@ -825,6 +826,9 @@
       const kidMake = platform === 'nuvio' && !kidNew.hidden && kidCreate.checked
         ? { name: document.getElementById('kid-name').value.trim() || 'Jeunesse', age: +kidAge.value } : null;
       if (!targets.length && !kidMake) return line('Aucun profil Nuvio coché : coche au moins un profil (onglet « Ton appli »).', 'ko');
+      if ((kidMake || targets.some((t) => t.age)) && !/^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim())) {
+        return line('Un profil Jeunesse a besoin de ta clé TMDB (gratuite) : mets-la dans l’onglet « Ta clé TMDB », puis réessaie.', 'ko');
+      }
       const lockedNoPin = targets.find((t) => t.pin != null && t.pin.length !== 4);
       if (lockedNoPin) return line(`Le profil ${lockedNoPin.name} a un PIN : tape ses 4 chiffres à côté de son nom (onglet « Ton appli »).`, 'ko');
       const skip = ADDONS.filter((a) => a.off).map(idOf);
@@ -891,8 +895,8 @@
 
         // Profil d'enfant (Nuvio) : Catalogue FR « Famille » à son âge, à la place des fiches ; un même âge = un même lien
         const kidFor = async (age) => {
-          const base = catfrUrl({ ...CATFR_ENFANTS, f: age }, gemini);
-          const kid = await fetchOne({ name: 'Catalogue FR Enfants', url: `${base}/manifest.json` });
+          const base = jeunesseBase(tmdb, age);
+          const kid = await fetchOne({ name: 'Jeunesse FR', url: `${base}/manifest.json` });
           return kid.failed ? null : { ...kid, base };
         };
         const kids = new Map();
@@ -904,11 +908,11 @@
         }
 
         // Écrit la liste sur chaque profil ; resservira tel quel pour « Réessayer » (got aura grandi)
-        const FICHES = ['Catalogue FR', 'Catalogue FR Enfants', 'TMDB (français)', 'TMDB Collections'];
+        const FICHES = ['Catalogue FR', 'Jeunesse FR', 'TMDB (français)', 'TMDB Collections'];
         const write = async () => {
           for (const t of targets) {
             if (t.kid === null) {
-              line(`Profil ${t.name} : le Catalogue FR Enfants ne répond pas, profil pas modifié.`, 'ko');
+              line(`Profil ${t.name} : l’addon Jeunesse FR ne répond pas, profil pas modifié.`, 'ko');
               continue;
             }
             // Enfant : ses fiches à lui, et seulement des addons sans catalogue (Cinemeta, Anime Catalogs… ne filtrent pas l'âge)
@@ -939,7 +943,7 @@
             // Collections, accueil et affiches du Catalogue FR : une fois par profil, dès que son catalogue est là
             const cat = t.kid || ours.find((a) => a.name === 'Catalogue FR');
             if (platform === 'nuvio' && cat && !t.extrasDone) {
-              const was = await catfrExtras(token, t.id, t.kid ? t.kid.base : catfr, who);
+              const was = await catfrExtras(token, t.id, t.kid ? t.kid.base : catfr, who, !!t.kid);
               t.extrasDone = true;
               if (!before.has(`${key}|catfr`)) before.set(`${key}|catfr`, was);
             }
