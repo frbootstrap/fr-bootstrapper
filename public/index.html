@@ -56,6 +56,11 @@
           <label class="chip"><input type="radio" name="platform" value="stremio" checked /> Stremio</label>
           <label class="chip"><input type="radio" name="platform" value="nuvio" /> Nuvio</label>
         </fieldset>
+        <fieldset class="kidway enfant-only stremio-only">
+          <legend>Stremio n’a pas de profils. Comment veux-tu faire&nbsp;?</legend>
+          <label class="way"><input type="radio" name="kidway" value="compte" checked /><span><strong>Un compte Stremio rien que pour lui <em>conseillé</em></strong><small>Crée un 2e compte Stremio sur <a href="https://web.stremio.com/#/intro" target="_blank" rel="noopener">web.stremio.com</a> avec une autre adresse e-mail (gratuit), puis mets son email et son mot de passe juste en dessous. On n’y installe que des choses pour enfants. Sur sa tablette ou sa télé, connecte-toi avec ce compte.</small></span></label>
+          <label class="way"><input type="radio" name="kidway" value="categorie" /><span><strong>Juste une catégorie Jeunesse sur mon compte</strong><small>3 rangées de plus sur ton accueil (Dessins animés, Séries pour enfants, À voir en famille), au milieu des tiennes. Pratique pour trouver un dessin animé, mais le reste de Stremio n’est pas filtré. Tes addons ne bougent pas.</small></span></label>
+        </fieldset>
         <div class="grid2">
           <div class="field">
             <label for="email">Email du compte</label>
@@ -75,7 +80,7 @@
           </div>
         </details>
         <p class="form-hint enfant-only nuvio-only" hidden>Ton compte Nuvio habituel : le profil de ton enfant y sera ajouté, à côté des tiens.</p>
-        <p class="form-hint enfant-only stremio-only">Pour un compte réservé à ton enfant (conseillé, voir l’onglet « Ton enfant »), mets ici l’email et le mot de passe de CE compte-là, pas du tien.</p>
+        <p class="form-hint enfant-only stremio-only" id="kid-account-hint"></p>
         <div class="field nuvio-only adulte-only" hidden>
           <button class="btn" type="button" id="load-profiles">Voir mes profils Nuvio</button>
           <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer. Sinon, on installe sur ton profil principal.</p>
@@ -152,7 +157,7 @@
         <p class="kicker kid-kicker">Espace enfant · <span class="app-name">Stremio</span></p>
         <h1>Ton enfant</h1>
         <p class="lead nuvio-only" hidden>Sur Nuvio, ton enfant a son propre profil, comme sur Netflix. Il n’y voit que des films et des séries de son âge. Tes profils à toi ne changent pas.</p>
-        <p class="lead stremio-only">Stremio n’a pas de profils. Pour que ton enfant ait son espace à lui, le plus simple est de lui donner son propre compte Stremio.</p>
+        <p class="lead stremio-only" id="kid-st-lead"></p>
 
         <fieldset class="choice nuvio-only" hidden>
           <legend>Son profil</legend>
@@ -172,18 +177,13 @@
           <p class="form-hint" id="kid-old-hint">On remplace les addons de ce profil par l’espace enfant (Annuler les remet).</p>
         </div>
 
-        <fieldset class="kidway stremio-only">
-          <legend>Comment veux-tu faire&nbsp;?</legend>
-          <label class="way"><input type="radio" name="kidway" value="compte" checked /><span><strong>Un compte Stremio rien que pour lui <em>conseillé</em></strong><small>Crée un 2e compte Stremio sur <a href="https://web.stremio.com/#/intro" target="_blank" rel="noopener">web.stremio.com</a> avec une autre adresse e-mail (gratuit), puis mets-le dans l’onglet « Ton appli ». On n’y installe que des choses pour enfants. Sur sa tablette ou sa télé, connecte-toi avec ce compte.</small></span></label>
-          <label class="way"><input type="radio" name="kidway" value="categorie" /><span><strong>Juste une catégorie Jeunesse sur mon compte</strong><small>3 rangées de plus sur ton accueil (Dessins animés, Séries pour enfants, À voir en famille), au milieu des tiennes. Pratique pour trouver un dessin animé, mais le reste de Stremio n’est pas filtré. Tes addons ne bougent pas.</small></span></label>
-        </fieldset>
 
         <fieldset class="ages" id="kid-ages">
           <legend>Son âge</legend>
-            <label class="age-card"><input type="radio" name="kidage" value="7" /><strong>Moins de 7 ans</strong><small>Tout-petits : dessins animés et films famille</small></label>
-            <label class="age-card"><input type="radio" name="kidage" value="10" /><strong>Moins de 10 ans</strong><small>Tous publics seulement</small></label>
-            <label class="age-card"><input type="radio" name="kidage" value="12" /><strong>Moins de 12 ans</strong><small>+ les titres « déconseillés aux -10 ans »</small></label>
-            <label class="age-card"><input type="radio" name="kidage" value="16" /><strong>Moins de 16 ans</strong><small>Ados : jusqu’aux « -12 ans »</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="7" /><strong>Moins de 7 ans</strong><small>Dessins animés et films pour tout-petits</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="10" /><strong>Moins de 10 ans</strong><small>Films et séries tous publics</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="12" /><strong>Moins de 12 ans</strong><small>Tous publics, plus quelques films un peu plus intenses</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="16" /><strong>Moins de 16 ans</strong><small>Presque tout, sauf les films interdits aux moins de 16 ans</small></label>
         </fieldset>
         <p class="form-hint" id="kid-age-hint">Choisis son âge pour continuer.</p>
         <p class="form-hint nuvio-only" hidden><strong>Conseil :</strong> dans Nuvio, mets un code PIN sur tes profils adultes. Sinon, ton enfant peut passer sur le tien.</p>
@@ -911,6 +911,8 @@
         document.getElementById('kid-new').hidden = !nuv || kidVal('kidprof') !== 'new';
         document.getElementById('kid-old').hidden = !nuv || kidVal('kidprof') !== 'old';
         document.getElementById('kid-ages').hidden = kidStremioCat();
+        document.getElementById('kid-account-hint').innerHTML = kidStremioCat() ? 'Ton compte Stremio habituel : la catégorie Jeunesse y sera ajoutée.' : 'Mets ici l’email et le mot de passe <strong>du compte de ton enfant</strong>, pas du tien.';
+        document.getElementById('kid-st-lead').textContent = kidStremioCat() ? 'Rien à régler ici : la catégorie Jeunesse sera ajoutée à ton compte. Passe à « Installer ».' : 'Sur son compte, on n’installe que des films et des séries de son âge.';
         document.querySelectorAll('.kid-hide-cat').forEach((el) => { el.hidden = kidStremioCat(); });
         const ageHint = document.getElementById('kid-age-hint');
         ageHint.hidden = kidStremioCat();
