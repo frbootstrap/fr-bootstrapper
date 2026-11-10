@@ -15,18 +15,40 @@
       <span>FR Bootstrapper</span>
     </div>
     <span id="compteur" class="count" hidden></span>
-    <nav class="tabs" id="stepper" aria-label="Étapes">
-      <button type="button" data-goto="0"><span class="tab-state" aria-hidden="true"></span>Ton appli</button>
-      <button type="button" data-goto="1"><span class="tab-state" aria-hidden="true"></span>Ta clé debrid</button>
-      <button type="button" data-goto="2"><span class="tab-state" aria-hidden="true"></span>Ta clé TMDB</button>
-      <button type="button" data-goto="3"><span class="tab-state" aria-hidden="true"></span>Tes trackers</button>
-      <button type="button" data-goto="4"><span class="tab-state" aria-hidden="true"></span>Installer</button>
+    <button type="button" class="change-path" id="change-path" hidden>← Changer de chemin</button>
+    <nav class="tabs" id="stepper" aria-label="Étapes" hidden>
+      <button type="button" data-goto="appli"><span class="tab-state" aria-hidden="true"></span>Ton appli</button>
+      <button type="button" data-goto="debrid"><span class="tab-state" aria-hidden="true"></span>Ta clé debrid</button>
+      <button type="button" data-goto="tmdb"><span class="tab-state" aria-hidden="true"></span>Ta clé TMDB</button>
+      <button type="button" data-goto="trackers" class="adulte-only"><span class="tab-state" aria-hidden="true"></span>Tes trackers</button>
+      <button type="button" data-goto="enfant" class="enfant-only"><span class="tab-state" aria-hidden="true"></span>Ton enfant</button>
+      <button type="button" data-goto="installer"><span class="tab-state" aria-hidden="true"></span>Installer</button>
     </nav>
   </header>
 
-  <main class="layout">
+  <main class="choose" id="choose">
+    <h1>Qu’est-ce qu’on installe&nbsp;?</h1>
+    <p class="lead">Des addons francophones sur Stremio ou Nuvio, en quelques minutes. Ton mot de passe part directement de ton navigateur vers ton appli, jamais chez nous.</p>
+    <div class="paths">
+      <button type="button" class="path" data-path="adulte">
+        <span class="path-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/></svg></span>
+        <strong>Installer mes addons</strong>
+        <span>Fiches en français, liens en VF et VOSTFR, sous-titres. Pour toi et ton compte.</span>
+        <span class="path-go">Commencer</span>
+      </button>
+      <button type="button" class="path kid" data-path="enfant">
+        <span class="path-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="7"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="6.5" r="2.5"/><path d="M9.5 15.5c1.4 1.2 3.6 1.2 5 0"/><path d="M10 11h.01M14 11h.01"/></svg></span>
+        <strong>Créer un espace enfant</strong>
+        <span>Un espace à part pour ton enfant : seulement des films et des séries de son âge, en français. Tes addons à toi ne changent pas.</span>
+        <span class="path-go">Commencer</span>
+      </button>
+    </div>
+    <p class="form-hint">Tu peux faire les deux, dans l’ordre que tu veux : repasse simplement ici après.</p>
+  </main>
+
+  <main class="layout" id="flow" hidden>
     <form class="card" id="install-form" novalidate>
-      <section class="step" data-step="0">
+      <section class="step" data-step="appli">
         <h1>Connecte ton compte</h1>
         <p class="lead">Installe d’un coup des addons francophones sur Stremio ou Nuvio. Ton mot de passe part directement de ton navigateur vers Stremio ou Nuvio, jamais chez nous.</p>
         <fieldset class="choice">
@@ -52,14 +74,16 @@
             <p class="form-hint">Sur <a href="https://web.stremio.com" target="_blank" rel="noopener">web.stremio.com</a>, connecte-toi, appuie sur F12, onglet Console, tape <code>JSON.parse(localStorage.getItem("profile")).auth.key</code> puis Entrée, et copie le résultat.</p>
           </div>
         </details>
-        <div class="field nuvio-only" hidden>
+        <p class="form-hint enfant-only nuvio-only" hidden>Ton compte Nuvio habituel : le profil de ton enfant y sera ajouté, à côté des tiens.</p>
+        <p class="form-hint enfant-only stremio-only">Pour un compte réservé à ton enfant (conseillé, voir l’onglet « Ton enfant »), mets ici l’email et le mot de passe de CE compte-là, pas du tien.</p>
+        <div class="field nuvio-only adulte-only" hidden>
           <button class="btn" type="button" id="load-profiles">Voir mes profils Nuvio</button>
-          <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer, et dis lesquels sont pour un enfant. Sinon, on installe sur ton profil principal.</p>
+          <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer. Sinon, on installe sur ton profil principal.</p>
           <ul class="profiles" id="profiles"></ul>
         </div>
       </section>
 
-      <section class="step" data-step="1" hidden>
+      <section class="step" data-step="debrid" hidden>
         <h1>Ta clé debrid</h1>
         <p class="lead">Les addons s’en servent pour lire les vidéos. Une seule suffit ; avec les deux, AllDebrid passe en premier et TorBox sert de secours.</p>
         <div class="field">
@@ -81,13 +105,14 @@
         </div>
       </section>
 
-      <section class="step" data-step="2" hidden>
-        <p class="kicker">Gratuite · 2 minutes · fortement conseillée</p>
+      <section class="step" data-step="tmdb" hidden>
+        <p class="kicker adulte-only">Gratuite · 2 minutes · fortement conseillée</p>
+        <p class="kicker enfant-only">Gratuite · 2 minutes · obligatoire pour l’espace enfant</p>
         <h1>Ta clé TMDB</h1>
-        <p class="lead">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
-        <div class="unlocks">
+        <p class="lead adulte-only">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
+        <p class="lead enfant-only">TMDB, c’est la grande base de données des films et séries. L’espace enfant s’en sert pour trouver les films, leurs résumés en français et surtout leur classification par âge.</p>
+        <div class="unlocks adulte-only">
           <div><strong>WaCustom</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
-          <div><strong>Jeunesse FR</strong><span>Les profils enfants sur Nuvio : accueil, recherche et fiches filtrés par âge.</span></div>
         </div>
         <div class="field">
           <label for="tmdb">Jeton d’accès en lecture TMDB</label>
@@ -107,7 +132,7 @@
         </div>
       </section>
 
-      <section class="step" data-step="3" hidden>
+      <section class="step adulte-only" data-step="trackers" hidden>
         <p class="kicker">Gratuit · fortement conseillé</p>
         <h1>Tes trackers</h1>
         <p class="lead">Un tracker, c’est un site communautaire qui répertorie des torrents, souvent en VF. Avec un compte, tu donnes aux addons accès à son catalogue : beaucoup plus de résultats en français. Inscris-toi, puis copie ta clé API ici.</p>
@@ -123,52 +148,74 @@
         </details>
       </section>
 
-      <section class="step" data-step="4" hidden>
+      <section class="step enfant-only" data-step="enfant" hidden>
+        <p class="kicker kid-kicker">Espace enfant · <span class="app-name">Stremio</span></p>
+        <h1>Ton enfant</h1>
+        <p class="lead nuvio-only" hidden>Sur Nuvio, ton enfant a son propre profil, comme sur Netflix. Il n’y voit que des films et des séries de son âge. Tes profils à toi ne changent pas.</p>
+        <p class="lead stremio-only">Stremio n’a pas de profils. Pour que ton enfant ait son espace à lui, le plus simple est de lui donner son propre compte Stremio.</p>
+
+        <fieldset class="choice nuvio-only" hidden>
+          <legend>Son profil</legend>
+          <label class="chip"><input type="radio" name="kidprof" value="new" checked /> Créer un nouveau profil</label>
+          <label class="chip"><input type="radio" name="kidprof" value="old" /> Il a déjà un profil (le choisir)</label>
+        </fieldset>
+        <div class="field nuvio-only" id="kid-new" hidden>
+          <label for="kid-name">Nom du profil</label>
+          <input id="kid-name" type="text" value="Jeunesse" maxlength="20" />
+        </div>
+        <div class="field nuvio-only" id="kid-old" hidden>
+          <button class="btn" type="button" id="kid-load">Voir mes profils Nuvio</button>
+          <div class="row" id="kid-pick" hidden>
+            <select id="kid-profile" aria-label="Profil de ton enfant"></select>
+            <input id="kid-pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN" aria-label="PIN à 4 chiffres de ce profil" hidden />
+          </div>
+          <p class="form-hint" id="kid-old-hint">On remplace les addons de ce profil par l’espace enfant (Annuler les remet).</p>
+        </div>
+
+        <fieldset class="kidway stremio-only">
+          <legend>Comment veux-tu faire&nbsp;?</legend>
+          <label class="way"><input type="radio" name="kidway" value="compte" checked /><span><strong>Un compte Stremio rien que pour lui <em>conseillé</em></strong><small>Crée un 2e compte Stremio sur <a href="https://web.stremio.com/#/intro" target="_blank" rel="noopener">web.stremio.com</a> avec une autre adresse e-mail (gratuit), puis mets-le dans l’onglet « Ton appli ». On n’y installe que des choses pour enfants. Sur sa tablette ou sa télé, connecte-toi avec ce compte.</small></span></label>
+          <label class="way"><input type="radio" name="kidway" value="categorie" /><span><strong>Juste une catégorie Jeunesse sur mon compte</strong><small>3 rangées de plus sur ton accueil (Dessins animés, Séries pour enfants, À voir en famille), au milieu des tiennes. Pratique pour trouver un dessin animé, mais le reste de Stremio n’est pas filtré. Tes addons ne bougent pas.</small></span></label>
+        </fieldset>
+
+        <fieldset class="ages" id="kid-ages">
+          <legend>Son âge</legend>
+            <label class="age-card"><input type="radio" name="kidage" value="7" /><strong>Moins de 7 ans</strong><small>Tout-petits : dessins animés et films famille</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="10" /><strong>Moins de 10 ans</strong><small>Tous publics seulement</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="12" /><strong>Moins de 12 ans</strong><small>+ les titres « déconseillés aux -10 ans »</small></label>
+            <label class="age-card"><input type="radio" name="kidage" value="16" /><strong>Moins de 16 ans</strong><small>Ados : jusqu’aux « -12 ans »</small></label>
+        </fieldset>
+        <p class="form-hint" id="kid-age-hint">Choisis son âge pour continuer.</p>
+        <p class="form-hint nuvio-only" hidden><strong>Conseil :</strong> dans Nuvio, mets un code PIN sur tes profils adultes. Sinon, ton enfant peut passer sur le tien.</p>
+      </section>
+
+      <section class="step" data-step="installer" hidden>
         <h1>C’est parti</h1>
         <p class="lead" id="install-lead"></p>
-        <div class="kids" id="kids">
-          <h2 class="sub">Pour les enfants <span class="opt">· facultatif</span></h2>
-          <div class="stremio-only">
-            <label class="check"><input type="checkbox" id="kids-stremio" /> Ajouter une catégorie Jeunesse à mon accueil</label>
-            <p class="form-hint">Stremio n’a pas de profils : on ajoute simplement 3 rangées à ton accueil (Dessins animés, Séries pour enfants, À voir en famille), au milieu des autres. Le reste de Stremio n’est pas filtré. Pour un vrai espace enfant, il faut Nuvio et ses profils.</p>
-          </div>
-          <div class="nuvio-only" hidden>
-            <div class="kid-new" id="kid-new">
-              <label class="check"><input type="checkbox" id="kid-create" /> Créer un profil Jeunesse pour un enfant</label>
-              <div class="row" id="kid-fields" hidden>
-                <input id="kid-name" type="text" value="Jeunesse" maxlength="20" aria-label="Nom du nouveau profil" />
-                <select id="kid-age" aria-label="Âge de l’enfant"></select>
-              </div>
-            </div>
-            <p class="form-hint">Un profil à part, comme sur Netflix, avec l’addon Jeunesse FR : accueil, collections (genres, studios, chaînes), recherche et fiches pour enfants. Seuls les titres classés officiellement sous l’âge choisi apparaissent, sans horreur ; aucun autre catalogue ni recherche sur ce profil. Les liens restent les mêmes. Conseil : dans Nuvio, mets un PIN sur les profils adultes.</p>
-            <p class="form-hint" id="kid-tmdb">Il faut ta clé TMDB (gratuite) : onglet « Ta clé TMDB ».</p>
-            <p class="form-hint">Ton enfant a déjà son profil&nbsp;? Onglet « Ton appli » → « Voir mes profils Nuvio » → choisis son âge à côté de son nom.</p>
-          </div>
-        </div>
-        <fieldset class="choice">
+        <fieldset class="choice adulte-only">
           <legend>Fiches et catalogues</legend>
           <label class="chip nuvio-only" hidden><input type="radio" name="meta" value="catfr" /> Catalogue FR : fiches, collections, accueil et affiches en français (conseillé)</label>
           <label class="chip"><input type="radio" name="meta" value="tmdb" checked /> Addon TMDB : fiches et catalogues en français</label>
           <label class="chip"><input type="radio" name="meta" value="cinemeta" /> Cinemeta seul : en anglais</label>
         </fieldset>
-        <p class="form-hint stremio-only">L’addon TMDB affiche les titres, résumés et affiches en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll. Cinemeta (l’addon de base de Stremio, en anglais) reste installé derrière, en secours.</p>
-        <p class="form-hint nuvio-only" hidden>Sur Nuvio, le <a href="https://nuvio-assets.xnzxflix.workers.dev/configure" target="_blank" rel="noopener">Catalogue FR</a> installe tout d’un coup : fiches en français, rangées d’accueil, collections (plateformes, genres, sagas…), ordre de l’accueil et affiches. <strong>Attention :</strong> il remplace ton accueil et tes affiches, et ajoute ses collections. Si tu as déjà tes propres collections ou un accueil arrangé à ta façon, choisis plutôt l’addon TMDB ou Cinemeta seul : eux ne touchent qu’aux addons. Dans tous les cas, Cinemeta (en anglais) reste installé tout en bas, en secours. La ligne « Collections » (sagas TMDB) est décochée d’office : elle fait doublon avec les sagas du Catalogue FR (tu peux la recocher). Si un jour le Catalogue FR ne marche plus, repasse ici et choisis l’addon TMDB, avec Collections cochée.</p>
-        <div class="field nuvio-only" hidden>
+        <p class="form-hint stremio-only adulte-only">L’addon TMDB affiche les titres, résumés et affiches en français, avec les catalogues Netflix, Prime Video, Disney+, Canal+, Apple TV+, HBO Max, Paramount+ et Crunchyroll. Cinemeta (l’addon de base de Stremio, en anglais) reste installé derrière, en secours.</p>
+        <p class="form-hint nuvio-only adulte-only" hidden>Sur Nuvio, le <a href="https://nuvio-assets.xnzxflix.workers.dev/configure" target="_blank" rel="noopener">Catalogue FR</a> installe tout d’un coup : fiches en français, rangées d’accueil, collections (plateformes, genres, sagas…), ordre de l’accueil et affiches. <strong>Attention :</strong> il remplace ton accueil et tes affiches, et ajoute ses collections. Si tu as déjà tes propres collections ou un accueil arrangé à ta façon, choisis plutôt l’addon TMDB ou Cinemeta seul : eux ne touchent qu’aux addons. Dans tous les cas, Cinemeta (en anglais) reste installé tout en bas, en secours. La ligne « Collections » (sagas TMDB) est décochée d’office : elle fait doublon avec les sagas du Catalogue FR (tu peux la recocher). Si un jour le Catalogue FR ne marche plus, repasse ici et choisis l’addon TMDB, avec Collections cochée.</p>
+        <div class="field nuvio-only adulte-only" hidden>
           <label for="gemini">Ta clé Gemini <span class="opt">· facultatif</span></label>
           <input id="gemini" type="text" name="gemini" spellcheck="false" autocomplete="off" placeholder="AIza…" />
           <p class="form-hint">Avec elle, le Catalogue FR ajoute des petits textes aux fiches (« pour qui », « à savoir »…). Gratuite, en 2 minutes sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Elle part seulement dans le lien de l’addon, chez toi.</p>
         </div>
-        <fieldset class="choice">
+        <fieldset class="choice kid-hide-cat">
           <legend>Qualité des vidéos</legend>
           <label class="chip"><input type="radio" name="qualite" value="tout" checked /> Toutes, 4K comprise</label>
           <label class="chip"><input type="radio" name="qualite" value="sans4k" /> Pas de 4K (1080p au plus)</label>
           <label class="chip"><input type="radio" name="qualite" value="720p" /> 720p au plus (petite connexion)</label>
         </fieldset>
-        <p class="form-hint">Sans 4K, les liens Full HD arrivent tout de suite, sans dérouler une liste de 4K. En 720p, les fichiers sont bien plus légers : pour une petite connexion qui coupe en Full HD. AIOSources et FKStream ne savent pas filtrer la résolution : chez eux, de la 4K peut encore apparaître.</p>
-        <label class="check"><input type="checkbox" name="notes" checked /> Afficher les notes des films et séries sur les affiches</label>
-        <p class="form-hint">Un petit bandeau avec les notes (IMDb, Rotten Tomatoes…) apparaît en bas de chaque affiche dans les catalogues. Décoche si tu préfères les affiches toutes simples.</p>
-        <label class="check"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
-        <details class="more">
+        <p class="form-hint kid-hide-cat">Sans 4K, les liens Full HD arrivent tout de suite, sans dérouler une liste de 4K. En 720p, les fichiers sont bien plus légers : pour une petite connexion qui coupe en Full HD. AIOSources et FKStream ne savent pas filtrer la résolution : chez eux, de la 4K peut encore apparaître.</p>
+        <label class="check adulte-only"><input type="checkbox" name="notes" checked /> Afficher les notes des films et séries sur les affiches</label>
+        <p class="form-hint adulte-only">Un petit bandeau avec les notes (IMDb, Rotten Tomatoes…) apparaît en bas de chaque affiche dans les catalogues. Décoche si tu préfères les affiches toutes simples.</p>
+        <label class="check adulte-only"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
+        <details class="more adulte-only">
           <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion&nbsp;?</summary>
           <p class="form-hint">Colle ton lien d’installation (il finit par /manifest.json). Sinon, laisse vide : on te les configure automatiquement.</p>
           <div class="field"><label for="mine_lumio">Lumio</label><input id="mine_lumio" type="url" name="mine_lumio" spellcheck="false" placeholder="https://…/manifest.json" /></div>
@@ -194,7 +241,23 @@
       </div>
     </form>
 
-    <aside class="card summary" aria-live="polite">
+    <aside class="card summary kid-aside enfant-only">
+      <div class="nuvio-only" hidden>
+        <h2>Ce que verra ton enfant</h2>
+        <div class="kid-sees"><strong>Un accueil pour enfants</strong><span>Films et séries pour enfants, nouveautés, grands classiques</span></div>
+        <div class="kid-sees"><strong>Des collections</strong><span>Genres, studios (Disney, Pixar…), chaînes (Nickelodeon…)</span></div>
+        <div class="kid-sees"><strong>Une recherche verrouillée</strong><span>Chaque résultat est vérifié : rien au-dessus de son âge</span></div>
+        <p class="form-hint">Les liens vidéo sont les mêmes que les tiens, avec ta clé debrid. Seuls les titres classés officiellement apparaissent, sans horreur ; un titre sans classification est écarté.</p>
+      </div>
+      <div class="stremio-only">
+        <h2>Pourquoi Nuvio fait plus&nbsp;?</h2>
+        <p class="form-hint">Sur Stremio, un compte = les mêmes addons pour tout le monde. D’où l’idée d’un compte à part pour ton enfant : tu te connectes avec sur son appareil.</p>
+        <p class="form-hint">Nuvio a des profils, comme Netflix : un seul compte, et chacun choisit son profil en ouvrant l’appli. Celui de ton enfant reçoit en plus un accueil arrangé avec des collections (genres, studios, chaînes).</p>
+        <p class="form-hint">Nuvio est gratuit et prend les mêmes addons. Pour l’essayer, choisis-le dans « Ton appli ».</p>
+      </div>
+    </aside>
+
+    <aside class="card summary adulte-only" aria-live="polite">
       <h2>Ce qui sera installé</h2>
       <p class="form-hint">Glisse un addon par sa poignée pour changer l’ordre (le premier de la liste est le premier dans ton appli, sauf les fiches TMDB et Collections, toujours en tête pour garder les titres en français). Décoche ceux que tu ne veux pas.</p>
       <p class="count"><span id="count">0</span> <span>sur <span id="total">13</span> addons</span></p>
@@ -513,12 +576,6 @@
     const profilesList = document.getElementById('profiles');
     const profilesHint = document.getElementById('profiles-hint');
     let profilesLoaded = false;
-    const kidNew = document.getElementById('kid-new');
-    const kidCreate = document.getElementById('kid-create');
-    const kidFields = document.getElementById('kid-fields');
-    const kidAge = document.getElementById('kid-age');
-    kidAge.append(...AGES.map(([v, t]) => new Option(t, v)));
-    kidCreate.addEventListener('change', () => { kidFields.hidden = !kidCreate.checked; });
     document.getElementById('load-profiles').addEventListener('click', async (e) => {
       const email = form.email.value.trim();
       if (!email || !form.password.value) return void (profilesHint.textContent = '✗ Remplis d’abord ton email et ton mot de passe.');
@@ -539,14 +596,6 @@
           name.textContent = p.name || `Profil ${p.profile_index}`;
           label.append(box, dot, name);
           li.append(label);
-          if (!(p.uses_primary_addons && p.profile_index !== 1)) {
-            const age = document.createElement('select');
-            age.dataset.age = p.profile_index;
-            age.setAttribute('aria-label', `Pour qui est le profil ${name.textContent}`);
-            age.append(new Option('Adulte', ''), ...AGES.map(([v, t]) => new Option(t, v)));
-            age.addEventListener('change', () => { if (age.value) box.checked = true; });
-            li.append(age);
-          }
           // Un profil qui reprend les addons du principal ne garde pas les siens : y écrire ne servirait à rien
           if (p.uses_primary_addons && p.profile_index !== 1) {
             box.disabled = true;
@@ -571,12 +620,9 @@
         }));
         // Un seul profil sans PIN : rien à choisir, on installe sur le principal comme avant
         profilesLoaded = list.length > 1 || !!list[0]?.pin_enabled;
-        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil d’enfant : choisis son âge à côté de son nom (il aura l’addon Jeunesse FR, voir « Pour les enfants » à l’étape Installer). Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
+        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio. Pour un profil d’enfant, prends plutôt le chemin « Créer un espace enfant ».'
           : list.length ? `Un seul profil (${list[0].name}) : on installe dessus.` : 'Aucun profil trouvé : on installe sur ton profil principal.';
         if (!profilesLoaded) profilesList.replaceChildren();
-        // Nuvio : 6 profils au plus
-        kidNew.hidden = list.length >= 6;
-        if (kidNew.hidden) kidCreate.checked = false;
       } catch (err) {
         profilesHint.textContent = `✗ ${err.message}`;
       }
@@ -586,8 +632,67 @@
     [form.email, form.password].forEach((f) => f.addEventListener('input', () => {
       profilesLoaded = false;
       profilesList.replaceChildren();
-      kidNew.hidden = false;
+      kidPick.hidden = true;
     }));
+
+    // Chemin choisi à l'arrivée : « adulte » (mes addons) ou « enfant » (espace enfant) ; #enfants ouvre directement le second
+    let mode = '';
+    const kidVal = (name) => form.querySelector(`[name="${name}"]:checked`)?.value || '';
+    const kidStremioCat = () => form.platform.value === 'stremio' && kidVal('kidway') === 'categorie';
+    function setMode(m) {
+      mode = m;
+      document.body.dataset.mode = m;
+      document.getElementById('choose').hidden = !!m;
+      document.getElementById('flow').hidden = !m;
+      document.getElementById('stepper').hidden = !m;
+      document.getElementById('change-path').hidden = !m;
+      history.replaceState(null, '', m === 'enfant' ? '#enfants' : m ? '#addons' : location.pathname);
+      if (m) { visited.clear(); current = 0; show(0); }
+      window.scrollTo({ top: 0 });
+    }
+    document.querySelectorAll('[data-path]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.path)));
+    document.getElementById('change-path').addEventListener('click', () => setMode(''));
+
+    // Profil existant de l'enfant (Nuvio) : la liste vient de Nuvio, posée en textContent
+    const kidPick = document.getElementById('kid-pick');
+    const kidProfile = document.getElementById('kid-profile');
+    const kidPin = document.getElementById('kid-pin');
+    const kidOldHint = document.getElementById('kid-old-hint');
+    let kidProfiles = [];
+    document.getElementById('kid-load').addEventListener('click', async (e) => {
+      if (!form.email.value.trim() || !form.password.value) return void (kidOldHint.textContent = '✗ Remplis d’abord ton email et ton mot de passe (onglet « Ton appli »).');
+      e.target.disabled = true;
+      kidOldHint.textContent = 'Connexion à Nuvio…';
+      try {
+        // Un profil qui suit le principal n'a pas ses propres addons : on ne le propose pas
+        kidProfiles = (await nuvio.profiles(await nuvio.login(form.email.value.trim(), form.password.value))).filter((p) => p.profile_index !== 1 && !p.uses_primary_addons);
+        kidProfile.replaceChildren(new Option('Choisis son profil…', ''), ...kidProfiles.map((p) => new Option(p.name || `Profil ${p.profile_index}`, p.profile_index)));
+        kidPick.hidden = !kidProfiles.length;
+        kidOldHint.textContent = kidProfiles.length ? 'On remplace les addons de ce profil par l’espace enfant (« Annuler » les remet).'
+          : 'Aucun autre profil que le principal : choisis plutôt « Créer un nouveau profil ».';
+      } catch (err) {
+        kidOldHint.textContent = `✗ ${err.message}`;
+      }
+      e.target.disabled = false;
+      updateSummary();
+    });
+    kidProfile.addEventListener('change', () => {
+      const p = kidProfiles.find((x) => x.profile_index === +kidProfile.value);
+      kidPin.hidden = !p?.pin_enabled;
+      kidPin.value = '';
+    });
+    kidPin.addEventListener('input', () => { kidPin.value = kidPin.value.replace(/\D/g, '').slice(0, 4); });
+
+    // Ce qui manque dans l'onglet « Ton enfant » (texte affiché), ou '' si c'est bon
+    function kidProblem() {
+      if (kidStremioCat()) return '';
+      if (!kidVal('kidage')) return 'Choisis l’âge de ton enfant (onglet « Ton enfant »).';
+      if (form.platform.value === 'nuvio' && kidVal('kidprof') === 'old') {
+        if (!kidProfile.value) return 'Choisis le profil de ton enfant (onglet « Ton enfant » → « Voir mes profils Nuvio »).';
+        if (!kidPin.hidden && kidPin.value.length !== 4) return 'Ce profil a un PIN : tape ses 4 chiffres (onglet « Ton enfant »).';
+      }
+      return '';
+    }
 
     // Identifiants des comptes créés chez WaCustom / Stream-Fusion : affichés une seule fois
     function showAccounts(addons) {
@@ -611,44 +716,54 @@
     }
 
     // Onglets libres : on va où on veut, chaque onglet montre s'il est rempli (vert) ou s'il manque l'obligatoire (rouge)
-    const steps = [...form.querySelectorAll('.step')];
+    const allSteps = [...form.querySelectorAll('.step')];
+    const STEPS = { adulte: ['appli', 'debrid', 'tmdb', 'trackers', 'installer'], enfant: ['appli', 'debrid', 'tmdb', 'enfant', 'installer'] };
+    const names = () => STEPS[mode] || STEPS.adulte;
     const stepBtns = [...document.querySelectorAll('[data-goto]')];
     const backBtn = document.getElementById('back-btn');
     const nextBtn = document.getElementById('next-btn');
     const stepError = document.getElementById('step-error');
-    let current = 0;
-    const visited = new Set();
-    const filled = [
-      () => !!form.authKey.value.trim() || (!!form.email.value.trim() && !!form.password.value),
-      () => !!(form.adKey.value.trim() || form.tbKey.value.trim()),
-      () => !!form.tmdb.value.trim(),
-      () => TRACKERS.some(([id]) => form[`trk_${id}`].value.trim()),
-    ];
+    let current = 0; // place dans names()
+    const visited = new Set(); // noms des étapes déjà quittées
+    const tmdbOk = () => /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim());
+    const filled = {
+      appli: () => !!form.authKey.value.trim() || (!!form.email.value.trim() && !!form.password.value),
+      debrid: () => !!(form.adKey.value.trim() || form.tbKey.value.trim()),
+      tmdb: () => !!form.tmdb.value.trim(),
+      trackers: () => TRACKERS.some(([id]) => form[`trk_${id}`].value.trim()),
+      enfant: () => !kidProblem(),
+    };
 
-    function stepProblem(i) {
-      if (i === 0 && !form.authKey.value.trim() && (!form.email.value.trim() || !form.password.value)) return 'Il manque ton email ou ton mot de passe.';
-      if (i === 1 && !form.adKey.value.trim() && !form.tbKey.value.trim()) return 'Il faut au moins une clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.';
+    function stepProblem(name) {
+      if (name === 'appli' && !form.authKey.value.trim() && (!form.email.value.trim() || !form.password.value)) return 'Il manque ton email ou ton mot de passe.';
+      if (name === 'debrid' && !form.adKey.value.trim() && !form.tbKey.value.trim()) return 'Il faut au moins une clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.';
+      if (name === 'tmdb' && mode === 'enfant' && !kidStremioCat() && !tmdbOk()) return 'Il faut ta clé TMDB (gratuite) pour l’espace enfant.';
+      if (name === 'enfant' && mode === 'enfant') return kidProblem();
       return '';
     }
+    // Étapes obligatoires du chemin : rouges une fois quittées sans être remplies
+    const required = () => (mode === 'enfant' ? ['appli', 'debrid', 'tmdb', 'enfant'] : ['appli', 'debrid']);
     function paintTabs() {
-      stepBtns.forEach((b, n) => {
-        const done = filled[n]?.();
-        // Rouge seulement pour l'obligatoire (appli, debrid), une fois qu'on est passé dessus
+      stepBtns.forEach((b) => {
+        const n = b.dataset.goto;
+        const done = n !== 'installer' && filled[n]?.() && !stepProblem(n);
         b.dataset.state = done ? 'done' : stepProblem(n) && visited.has(n) ? 'missing' : '';
-        b.toggleAttribute('aria-current', n === current);
+        b.toggleAttribute('aria-current', n === names()[current]);
         b.querySelector('.tab-state').textContent = b.dataset.state === 'done' ? '✓' : b.dataset.state === 'missing' ? '!' : '';
       });
     }
     function show(i) {
-      if (i !== current) visited.add(current);
-      current = i;
-      if (i === steps.length - 1) [0, 1].forEach((n) => visited.add(n));
-      steps.forEach((s, n) => { s.hidden = n !== i; });
-      backBtn.hidden = i === 0;
-      nextBtn.hidden = i === steps.length - 1;
+      const list = names();
+      if (i !== current) visited.add(list[current]);
+      current = Math.max(0, Math.min(i, list.length - 1));
+      const name = list[current];
+      if (name === 'installer') required().forEach((n) => visited.add(n));
+      allSteps.forEach((st) => { st.hidden = st.dataset.step !== name; });
+      backBtn.hidden = current === 0;
+      nextBtn.hidden = current === list.length - 1;
       stepError.textContent = '';
       updateSummary();
-      const title = steps[i].querySelector('h1');
+      const title = allSteps.find((st) => st.dataset.step === name).querySelector('h1');
       title.tabIndex = -1;
       title.focus({ preventScroll: true });
       window.scrollTo({ top: 0 });
@@ -656,14 +771,13 @@
     const next = () => show(current + 1);
     nextBtn.addEventListener('click', next);
     backBtn.addEventListener('click', () => show(current - 1));
-    stepBtns.forEach((b, n) => b.addEventListener('click', () => show(n)));
+    stepBtns.forEach((b) => b.addEventListener('click', () => show(names().indexOf(b.dataset.goto))));
 
     // Mêmes règles que lib/addons.js, qui reste seul juge au moment d'installer ; même ordre par défaut.
     // id = nom du lien quand il diffère du nom affiché
     const ADDONS = [
       { name: 'Fiches en français', id: 'TMDB (français)', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
       { name: 'Collections', id: 'TMDB Collections', note: 'sagas', ok: () => true, free: true },
-      { name: 'Jeunesse', id: 'Catalogue FR Jeunesse', note: '3 rangées enfants', offNote: '3 rangées enfants', ok: () => true, free: true, off: true },
       { name: 'Lumio', ok: (k) => k.debrid },
       { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
@@ -758,8 +872,6 @@
     });
 
     let catWas = false;
-    const kidsStremio = document.getElementById('kids-stremio');
-    kidsStremio.addEventListener('change', () => { ADDONS[2].off = !kidsStremio.checked; updateSummary(); });
     function updateSummary() {
       const has = (id) => !!form[`trk_${id}`].value.trim();
       const k = {
@@ -778,12 +890,6 @@
         a.on = a.ok(k);
         a.why = a.on ? a.note || '' : !k.debrid && !a.free ? '+ clé debrid' : a.need;
       }
-      kidsStremio.checked = !ADDONS[2].off;
-      // Profil Jeunesse sans clé TMDB : on le dit tout de suite, en rouge
-      const kidTmdb = document.getElementById('kid-tmdb');
-      kidTmdb.style.color = kidCreate.checked && !k.tmdb ? 'var(--danger)' : '';
-      kidTmdb.textContent = kidCreate.checked && !k.tmdb ? '✗ Il faut ta clé TMDB (gratuite) pour le profil Jeunesse : onglet « Ta clé TMDB ».'
-        : k.tmdb ? '✓ Clé TMDB fournie : le profil Jeunesse est possible.' : 'Il faut ta clé TMDB (gratuite) : onglet « Ta clé TMDB ».';
       const n = order.filter((r) => r.on && !r.off).length;
       // Tout se déplace, même verrouillé ; la case n'apparaît qu'une fois l'addon disponible
       list.innerHTML = order.map((r) => {
@@ -796,20 +902,43 @@
       document.getElementById('total').textContent = ADDONS.length;
       document.getElementById('bar').style.transform = `scaleX(${n / ADDONS.length})`;
       const app = form.platform.value === 'nuvio' ? 'Nuvio' : 'Stremio';
-      document.getElementById('install-lead').textContent = `On installe ${n} addon${n > 1 ? 's' : ''} sur ton compte ${app}, sur tous tes appareils. Ça prend quelques secondes.`;
-      if (!btn.disabled) btn.textContent = `Installer les ${n} addons`;
-      nextBtn.textContent = (current === 2 || current === 3) && !filled[current]() ? 'Passer cette étape' : 'Continuer';
+      const lead = document.getElementById('install-lead');
+      const name = names()[current];
+      if (mode === 'enfant') {
+        // Onglet « Ton enfant » : ce qui est visible dépend de l'appli et des choix
+        document.querySelectorAll('.app-name').forEach((el) => { el.textContent = app; });
+        const nuv = form.platform.value === 'nuvio';
+        document.getElementById('kid-new').hidden = !nuv || kidVal('kidprof') !== 'new';
+        document.getElementById('kid-old').hidden = !nuv || kidVal('kidprof') !== 'old';
+        document.getElementById('kid-ages').hidden = kidStremioCat();
+        document.querySelectorAll('.kid-hide-cat').forEach((el) => { el.hidden = kidStremioCat(); });
+        const ageHint = document.getElementById('kid-age-hint');
+        ageHint.hidden = kidStremioCat();
+        ageHint.textContent = kidVal('kidage') ? '✓ C’est noté.' : 'Choisis son âge pour continuer.';
+        ageHint.style.color = kidVal('kidage') ? 'var(--ok)' : '#ffb35c';
+        const age = AGES.find(([v]) => v === +kidVal('kidage'))?.[1].replace(/^\S+ · /, '').toLowerCase() || '';
+        const who = nuv ? (kidVal('kidprof') === 'old' ? `le profil « ${kidProfile.selectedOptions[0]?.textContent || '…'} »` : `un profil « ${document.getElementById('kid-name').value.trim() || 'Jeunesse'} »`) : '';
+        lead.textContent = kidStremioCat() ? 'On ajoute la catégorie Jeunesse (3 rangées) à ton accueil Stremio. Tes addons ne bougent pas.'
+          : nuv ? `On prépare ${who} pour ton enfant (${age || 'âge à choisir'}) sur ton compte Nuvio, avec l’espace enfant et tes addons de liens. Tes profils à toi ne changent pas.`
+            : `On remplace tout ce qu’il y a sur ce compte Stremio par l’espace enfant (${age || 'âge à choisir'}) et tes addons de liens. À faire sur le compte de ton enfant, pas sur le tien.`;
+        if (!btn.disabled) btn.textContent = kidStremioCat() ? 'Ajouter la catégorie Jeunesse' : 'Créer l’espace enfant';
+      } else {
+        lead.textContent = `On installe ${n} addon${n > 1 ? 's' : ''} sur ton compte ${app}, sur tous tes appareils. Ça prend quelques secondes.`;
+        if (!btn.disabled) btn.textContent = `Installer les ${n} addons`;
+      }
+      nextBtn.textContent = (name === 'tmdb' || name === 'trackers') && !filled[name]() && !stepProblem(name) ? 'Passer cette étape' : 'Continuer';
       paintTabs();
     }
     form.addEventListener('input', updateSummary);
     form.addEventListener('change', updateSummary);
-    show(0);
+    // Arrivée : #enfants (lien direct) ouvre l'espace enfant, #addons le reste ; sinon l'écran de choix
+    setMode(location.hash === '#enfants' ? 'enfant' : location.hash === '#addons' ? 'adulte' : '');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       // Entrée dans un champ = étape suivante, pas installation
-      if (current < steps.length - 1) return next();
-      const missing = [0, 1].map(stepProblem).filter(Boolean);
+      if (current < names().length - 1) return next();
+      const missing = required().map(stepProblem).filter(Boolean);
       if (missing.length) {
         paintTabs();
         return void (stepError.textContent = `${missing.join(' ')} Regarde les onglets en rouge.`);
@@ -834,26 +963,33 @@
       if (!authKey && (!email || !password)) return line('Il manque ton email ou ton mot de passe.', 'ko');
       if (!adKey && !tbKey) return line('Il manque ta clé AllDebrid ou TorBox : sans elle, les addons ne peuvent rien lire.', 'ko');
       if (Object.values(mine).some((u) => !/^https:\/\/.+\/manifest\.json$/.test(u))) return line('Un lien « j’ai déjà un compte » doit commencer par https:// et finir par /manifest.json.', 'ko');
-      if (!ADDONS.some((a) => a.on && !a.off)) return line('Tous les addons sont décochés : coche au moins un addon dans la liste.', 'ko');
-      // Profils visés : ceux cochés si la liste a été affichée, sinon le principal (Stremio n'a pas de profils)
-      const targets = platform === 'nuvio' && profilesLoaded
+      const kid = mode === 'enfant';
+      if (!kid && !ADDONS.some((a) => a.on && !a.off)) return line('Tous les addons sont décochés : coche au moins un addon dans la liste.', 'ko');
+      const kidAgeNum = +kidVal('kidage');
+      // Espace enfant : Nuvio = un profil (nouveau ou existant) ; Stremio = tout le compte (compte de l'enfant) ou une simple catégorie
+      const targets = kid
+        ? (platform === 'nuvio'
+          ? (kidVal('kidprof') === 'old' ? [{ id: +kidProfile.value, name: kidProfile.selectedOptions[0].textContent, pin: kidPin.hidden ? undefined : kidPin.value, age: kidAgeNum }] : [])
+          : [{ id: 1, name: '', age: kidAgeNum, wholeAccount: true }])
+        : platform === 'nuvio' && profilesLoaded
         ? [...profilesList.querySelectorAll('[data-profile]:checked:not(:disabled)')].map((b) => ({
           id: +b.dataset.profile, name: b.parentNode.textContent, pin: profilesList.querySelector(`[data-pin="${b.dataset.profile}"]`)?.value.trim(),
           age: +profilesList.querySelector(`[data-age="${b.dataset.profile}"]`)?.value || 0,
         }))
         : [{ id: 1, name: '' }];
-      const kidMake = platform === 'nuvio' && !kidNew.hidden && kidCreate.checked
-        ? { name: document.getElementById('kid-name').value.trim() || 'Jeunesse', age: +kidAge.value } : null;
+      const kidMake = kid && platform === 'nuvio' && kidVal('kidprof') === 'new'
+        ? { name: document.getElementById('kid-name').value.trim() || 'Jeunesse', age: kidAgeNum } : null;
       if (!targets.length && !kidMake) return line('Aucun profil Nuvio coché : coche au moins un profil (onglet « Ton appli »).', 'ko');
-      if ((kidMake || targets.some((t) => t.age)) && !/^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim())) {
+      if ((kidMake || targets.some((t) => t.age)) && !tmdbOk()) {
         return line('Un profil Jeunesse a besoin de ta clé TMDB (gratuite) : mets-la dans l’onglet « Ta clé TMDB », puis réessaie.', 'ko');
       }
       const lockedNoPin = targets.find((t) => t.pin != null && t.pin.length !== 4);
       if (lockedNoPin) return line(`Le profil ${lockedNoPin.name} a un PIN : tape ses 4 chiffres à côté de son nom (onglet « Ton appli »).`, 'ko');
-      const skip = ADDONS.filter((a) => a.off).map(idOf);
+      // Enfant : pas de fiches adultes ni d'addons à catalogues (de toute façon écartés du profil enfant)
+      const skip = kid ? ['TMDB (français)', 'TMDB Collections', 'Anime Catalogs', 'FKStream'] : ADDONS.filter((a) => a.off).map(idOf);
       // Catalogue FR (Nuvio) n'est pas dans la liste : -1, en tête ; Cinemeta (Nuvio) tout en bas
       const rank = (a) => (a.url === CINEMETA ? Infinity : order.findIndex((o) => idOf(o) === a.name));
-      const catfr = platform === 'nuvio' && form.meta.value === 'catfr' && !skip.includes('TMDB (français)') ? catfrBase(form.gemini.value.trim()) : null;
+      const catfr = !kid && platform === 'nuvio' && form.meta.value === 'catfr' && !skip.includes('TMDB (français)') ? catfrBase(form.gemini.value.trim()) : null;
 
       btn.disabled = true;
       btn.textContent = 'Installation…';
@@ -872,6 +1008,24 @@
           line(`PIN du profil ${t.name} accepté.`, 'ok');
         }
 
+        // Stremio, « juste une catégorie » : on ajoute un seul addon à la liste, sans rien fabriquer d'autre
+        if (kid && kidStremioCat()) {
+          const url = `${catfrUrl(CATFR_JEUNESSE, '')}/manifest.json`;
+          const manifest = await (await fetch(url, { signal: AbortSignal.timeout(15000) })).json();
+          const current = await stremio.get(token);
+          const key = `stremio|${authKey || email}|1`;
+          if (!before.has(key)) before.set(key, current);
+          undo = { api: stremio, token, written: [{ id: 1, name: '', key }] };
+          if (current.some((a) => a.transportUrl === url)) {
+            line('La catégorie Jeunesse est déjà sur ton compte : rien à faire.', 'ok done');
+          } else {
+            await stremio.set(token, [...current, { transportUrl: url, transportName: '', manifest, flags: {} }]);
+            line('Catégorie Jeunesse ajoutée à ton accueil (3 rangées). Tes autres addons n’ont pas bougé.', 'ok done');
+            line('Ferme complètement Stremio puis rouvre-le : les rangées apparaissent en bas de ton accueil.', 'wait');
+          }
+          return;
+        }
+
         line('Vérification de tes clés et fabrication des liens…');
         const tLinks = performance.now();
         const body = { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, notes: form.notes.checked, qualite: form.qualite.value === 'tout' ? '' : form.qualite.value };
@@ -881,11 +1035,10 @@
         const gemini = form.gemini.value.trim();
         // Liens fixes, faits ici : fiches en français (addon TMDB sur Stremio, Catalogue FR sur Nuvio), Collections, Jeunesse ;
         // Nuvio n'a pas Cinemeta d'office (Stremio, si) : il reste en secours, tout en bas (choix de Belouga)
-        const fixed = [
+        const fixed = kid ? [] : [
           catfr ? { name: 'Catalogue FR', url: `${catfr}/manifest.json` }
             : form.meta.value === 'tmdb' && !skip.includes('TMDB (français)') && { name: 'TMDB (français)', url: form.notes.checked ? TMDB_FR : TMDB_FR_SANS_NOTES },
           !skip.includes('TMDB Collections') && { name: 'TMDB Collections', url: TMDB_COLLECTIONS },
-          !skip.includes('Catalogue FR Jeunesse') && { name: 'Catalogue FR Jeunesse', url: `${catfrUrl(CATFR_JEUNESSE, gemini)}/manifest.json` },
           platform === 'nuvio' && { name: 'Cinemeta', url: CINEMETA },
         ].filter(Boolean);
 
@@ -946,10 +1099,11 @@
             const current = await api.get(token, t.id);
             const key = `${platform}|${authKey || email}|${t.id}`;
             if (!before.has(key)) before.set(key, current);
-            // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
-            const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
+            // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base.
+            // Compte d'enfant : surtout pas (la recherche de Cinemeta montre tout) ; ses fiches viennent de Jeunesse FR
+            const pinned = platform === 'stremio' && !t.wholeAccount ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
             const urls = new Set([...pinned, ...objs].map((a) => a.transportUrl));
-            const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
+            const kept = form.keep.checked && !kid ? current.filter((a) => !urls.has(a.transportUrl)) : [];
             await api.set(token, [...objs.filter(isTmdb), ...pinned, ...objs.filter((a) => !isTmdb(a) && !isCinemeta(a)), ...kept, ...objs.filter(isCinemeta)], t.id);
             if (!undo.written.some((w) => w.key === key)) undo.written.push({ id: t.id, name: t.name, key, created: t.created });
             const who = t.name ? ` (profil ${t.name}${t.kid ? ', accueil enfant' : ''})` : '';
