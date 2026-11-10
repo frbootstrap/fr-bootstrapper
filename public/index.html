@@ -433,10 +433,11 @@
       const byKey = new Map(prev.map((it) => [key(it), it]));
       const ours = ordre.map((o) => (o.collection
         ? { addon_id: '', type: '', catalog_id: '', is_collection: true, collection_id: o.collection }
-        : { addon_id: addon, type: o.type, catalog_id: o.id, is_collection: false, collection_id: '' }));
+        : { addon_id: addon, type: o.type, catalog_id: o.id, is_collection: false, collection_id: '', titre: o.titre }));
       const ourKeys = new Set(ours.map(key));
       return [
-        ...ours.map((it) => ({ ...it, enabled: true, custom_title: byKey.get(key(it))?.custom_title || '' })),
+        // titre : nom voulu par l'addon (Nuvio ajoute sinon « - Movies » au nom de la rangée) ; celui de la personne passe avant
+        ...ours.map((it) => ({ ...it, enabled: true, custom_title: byKey.get(key(it))?.custom_title || it.titre || '' })),
         ...prev.filter((it) => !ourKeys.has(key(it))),
       ].map((it, order) => ({
         addon_id: it.addon_id || '', type: it.type || '', catalog_id: it.catalog_id || '', enabled: it.enabled !== false, order,
