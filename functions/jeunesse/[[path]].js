@@ -9,7 +9,8 @@ export async function onRequestGet({ request, params, waitUntil }) {
   const cfg = readConfig(decodeURIComponent(conf || ''));
   // Mise en cache SANS le jeton de la personne : une rangée est la même pour tous les enfants du même âge, une fiche pour tous
   const shared = cfg && rest[0] !== 'manifest.json'
-    ? new Request(`https://cache.jeunesse/${rest[0] === 'meta' ? 'tous' : `age-${cfg.a}`}/${rest.join('/')}`)
+    // v2 : à augmenter quand la forme des réponses change (sinon l'ancienne reste servie jusqu'à 24 h) ; le site dans la clé : l'aperçu ne sert pas ses liens au site principal
+    ? new Request(`https://cache.jeunesse/v2/${new URL(request.url).host}/${rest[0] === 'meta' ? 'tous' : `age-${cfg.a}`}/${rest.join('/')}`)
     : null;
   const cache = globalThis.caches?.default;
   if (shared && cache) {
@@ -18,7 +19,7 @@ export async function onRequestGet({ request, params, waitUntil }) {
   }
   let out;
   try {
-    out = await handle(path);
+    out = await handle(path, undefined, new URL(request.url).origin);
   } catch (err) {
     // TMDB en panne ou jeton refusé : liste vide plutôt qu'une erreur (l'appli affiche juste une rangée vide)
     console.error('jeunesse :', err.message);
