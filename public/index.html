@@ -54,7 +54,7 @@
         </details>
         <div class="field nuvio-only" hidden>
           <button class="btn" type="button" id="load-profiles">Voir mes profils Nuvio</button>
-          <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer. Sinon, on installe sur ton profil principal.</p>
+          <p class="form-hint" id="profiles-hint">Plusieurs profils sur ton compte&nbsp;? Choisis ceux où installer, et dis lesquels sont pour un enfant. Sinon, on installe sur ton profil principal.</p>
           <ul class="profiles" id="profiles"></ul>
         </div>
       </section>
@@ -138,6 +138,12 @@
           <input id="gemini" type="text" name="gemini" spellcheck="false" autocomplete="off" placeholder="AIza…" />
           <p class="form-hint">Avec elle, le Catalogue FR ajoute des petits textes aux fiches (« pour qui », « à savoir »…). Gratuite, en 2 minutes sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Elle part seulement dans le lien de l’addon, chez toi.</p>
         </div>
+        <fieldset class="choice">
+          <legend>Qualité des vidéos</legend>
+          <label class="chip"><input type="radio" name="qualite" value="tout" checked /> Toutes, 4K comprise</label>
+          <label class="chip"><input type="radio" name="qualite" value="sans4k" /> Pas de 4K (1080p au plus)</label>
+        </fieldset>
+        <p class="form-hint">Sans 4K, les liens Full HD arrivent tout de suite, sans dérouler une liste de 4K. AIOSources et FKStream ne savent pas filtrer la résolution : chez eux, de la 4K peut encore apparaître.</p>
         <label class="check"><input type="checkbox" name="notes" checked /> Afficher les notes des films et séries sur les affiches</label>
         <p class="form-hint">Un petit bandeau avec les notes (IMDb, Rotten Tomatoes…) apparaît en bas de chaque affiche dans les catalogues. Décoche si tu préfères les affiches toutes simples.</p>
         <label class="check"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
@@ -151,6 +157,9 @@
         <button class="btn btn-primary btn-big" type="submit" id="install-btn">Installer les addons</button>
         <ul class="install-log" id="install-log" aria-live="polite"></ul>
         <div class="form-warning" id="accounts" hidden></div>
+        <div class="undo" id="retry" hidden>
+          <button class="btn btn-primary" type="button" id="retry-btn">Réessayer les addons sautés</button>
+        </div>
         <div class="undo" id="undo" hidden>
           <button class="btn" type="button" id="undo-btn">Annuler : remettre mes anciens addons</button>
           <button class="btn btn-ghost" type="button" id="backup-btn">Télécharger ma liste d’avant</button>
@@ -213,9 +222,22 @@
       ],
       ca: 1, to: { 2: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 6: [8, 0, 1, 2, 3, 4, 5, 6, 7] }, tv: 2,
     };
-    const catfrBase = (gemini) => 'https://nuvio-assets.xnzxflix.workers.dev/' + btoa(String.fromCharCode(
-      ...new TextEncoder().encode(JSON.stringify({ ...CATFR_CONF, ...(gemini && { k: gemini }) })),
+    const catfrUrl = (conf, gemini) => 'https://nuvio-assets.xnzxflix.workers.dev/' + btoa(String.fromCharCode(
+      ...new TextEncoder().encode(JSON.stringify({ ...conf, ...(gemini && { k: gemini }) })),
     )).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const catfrBase = (gemini) => catfrUrl(CATFR_CONF, gemini);
+    // Programmation « Famille » du Catalogue FR (sa recette toute prête, compactée comme le fait sa page) :
+    // dessins animés, films famille, aventures, séries enfants, pas d'horreur ; f = âge du plus jeune (1 = 10 ans et +)
+    const CATFR_ENFANTS = {
+      n: 'Catalogue FR Enfants', r: [0, 'p0', 10, 'p1', 1, 'p2', 3, 12],
+      x: [{ n: 'Dessins animés', t: 2, g: [2] }, { n: 'Grandes aventures', g: [1] }, { n: 'Séries pour les enfants', t: 1, g: [18] }], e: [10],
+    };
+    const AGES = [[6, 'Enfant · moins de 10 ans'], [1, 'Enfant · 10 ans et +'], [12, 'Ado · 12 ans et +'], [16, 'Ado · 16 ans et +']];
+    // Pour Stremio (pas de profils) : 3 rangées seulement sur l'accueil, Dessins animés, Séries pour les enfants, À voir en famille
+    const CATFR_JEUNESSE = {
+      n: 'Catalogue FR Jeunesse', r: ['p0', 'p1', 10],
+      x: [{ n: 'Dessins animés', t: 2, g: [2] }, { n: 'Séries pour les enfants', t: 1, g: [18] }], e: [10], f: 1,
+    };
     // Affiches du Catalogue FR au style de Belouga (le code « Q0Hv » contient les réglages, rien n'est stocké chez lui)
     const CATFR_AFFICHES = 'https://affiches.xnzxflix.workers.dev/perso/Q0Hv/{type}/{shape}/{id}.jpg';
     const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
@@ -238,6 +260,8 @@
     const log = document.getElementById('install-log');
     const accounts = document.getElementById('accounts');
     const undoBox = document.getElementById('undo');
+    const retryBox = document.getElementById('retry');
+    let retry = null; // addons sautés au dernier passage, et de quoi les réessayer
     // Liste d'avant le PREMIER passage ici (par compte et profil) : réinstaller plusieurs fois n'écrase pas la sauvegarde
     const before = new Map();
     let undo = null; // dernier passage : { api, token, written: [{ id, name, key }] }
@@ -461,6 +485,14 @@
           name.textContent = p.name || `Profil ${p.profile_index}`;
           label.append(box, dot, name);
           li.append(label);
+          if (!(p.uses_primary_addons && p.profile_index !== 1)) {
+            const age = document.createElement('select');
+            age.dataset.age = p.profile_index;
+            age.setAttribute('aria-label', `Pour qui est le profil ${name.textContent}`);
+            age.append(new Option('Adulte', ''), ...AGES.map(([v, t]) => new Option(t, v)));
+            age.addEventListener('change', () => { if (age.value) box.checked = true; });
+            li.append(age);
+          }
           // Un profil qui reprend les addons du principal ne garde pas les siens : y écrire ne servirait à rien
           if (p.uses_primary_addons && p.profile_index !== 1) {
             box.disabled = true;
@@ -485,7 +517,7 @@
         }));
         // Un seul profil sans PIN : rien à choisir, on installe sur le principal comme avant
         profilesLoaded = list.length > 1 || !!list[0]?.pin_enabled;
-        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
+        profilesHint.textContent = profilesLoaded ? 'Coche les profils où installer. Profil d’enfant : choisis son âge, il aura un accueil jeunesse (dessins animés, films famille, rien qui fait peur) avec les mêmes addons de liens. Profil avec PIN : tape ses 4 chiffres, ils sont vérifiés par Nuvio.'
           : list.length ? `Un seul profil (${list[0].name}) : on installe dessus.` : 'Aucun profil trouvé : on installe sur ton profil principal.';
         if (!profilesLoaded) profilesList.replaceChildren();
       } catch (err) {
@@ -570,6 +602,7 @@
     const ADDONS = [
       { name: 'Fiches en français', id: 'TMDB (français)', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
       { name: 'Collections', id: 'TMDB Collections', note: 'sagas', ok: () => true, free: true },
+      { name: 'Jeunesse', id: 'Catalogue FR Jeunesse', note: 'rangées enfants', ok: () => true, free: true, off: true },
       { name: 'Lumio', ok: (k) => k.debrid },
       { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
@@ -715,7 +748,9 @@
       log.innerHTML = '';
       accounts.hidden = true;
       undoBox.hidden = true;
+      retryBox.hidden = true;
       undo = null;
+      retry = null;
       const platform = form.platform.value;
       const api = platform === 'nuvio' ? nuvio : stremio;
       const email = form.email.value.trim();
@@ -735,6 +770,7 @@
       const targets = platform === 'nuvio' && profilesLoaded
         ? [...profilesList.querySelectorAll('[data-profile]:checked:not(:disabled)')].map((b) => ({
           id: +b.dataset.profile, name: b.parentNode.textContent, pin: profilesList.querySelector(`[data-pin="${b.dataset.profile}"]`)?.value.trim(),
+          age: +profilesList.querySelector(`[data-age="${b.dataset.profile}"]`)?.value || 0,
         }))
         : [{ id: 1, name: '' }];
       if (!targets.length) return line('Aucun profil Nuvio coché : coche au moins un profil (onglet « Ton appli »).', 'ko');
@@ -764,20 +800,26 @@
 
         line('Vérification de tes clés et fabrication des liens…');
         const tLinks = performance.now();
-        const links = await postJson('/api/liens', { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, skip, notes: form.notes.checked });
+        const body = { alldebrid: adKey, torbox: tbKey, tmdb, trackers, mine, notes: form.notes.checked, sans4k: form.qualite.value === 'sans4k' };
+        const links = await postJson('/api/liens', { ...body, skip });
         const msTxt = (t) => `${Math.round(performance.now() - t)} ms`;
         line(`Liens fabriqués en ${msTxt(tLinks)}`);
+        const gemini = form.gemini.value.trim();
+        // Liens fixes, faits ici : fiches en français (addon TMDB sur Stremio, Catalogue FR sur Nuvio), Collections, Jeunesse ;
         // Nuvio n'a pas Cinemeta d'office (Stremio, si) : il reste en secours, tout en bas (choix de Belouga)
-        if (platform === 'nuvio') links.addons.push({ name: 'Cinemeta', url: CINEMETA });
-        if (!skip.includes('TMDB Collections')) links.addons.unshift({ name: 'TMDB Collections', url: TMDB_COLLECTIONS });
-        // Fiches en français : addon TMDB sur Stremio, Catalogue FR sur Nuvio
-        if (catfr) links.addons.unshift({ name: 'Catalogue FR', url: `${catfr}/manifest.json` });
-        else if (form.meta.value === 'tmdb' && !skip.includes('TMDB (français)')) links.addons.unshift({ name: 'TMDB (français)', url: form.notes.checked ? TMDB_FR : TMDB_FR_SANS_NOTES });
-        links.addons.sort((a, b) => rank(a) - rank(b));
-        const fetched = await Promise.all(links.addons.map(async (a) => {
+        const fixed = [
+          catfr ? { name: 'Catalogue FR', url: `${catfr}/manifest.json` }
+            : form.meta.value === 'tmdb' && !skip.includes('TMDB (français)') && { name: 'TMDB (français)', url: form.notes.checked ? TMDB_FR : TMDB_FR_SANS_NOTES },
+          !skip.includes('TMDB Collections') && { name: 'TMDB Collections', url: TMDB_COLLECTIONS },
+          !skip.includes('Catalogue FR Jeunesse') && { name: 'Catalogue FR Jeunesse', url: `${catfrUrl(CATFR_JEUNESSE, gemini)}/manifest.json` },
+          platform === 'nuvio' && { name: 'Cinemeta', url: CINEMETA },
+        ].filter(Boolean);
+
+        // Un addon qui ne répond pas est sauté (failed) ; on garde son lien s'il en a un, pour le réessayer sans recréer de compte
+        const fetchOne = async (a) => {
           if (a.error) {
             line(`${a.name} : indisponible en ce moment, sauté (${a.error}) · lien ${a.ms} ms`, 'ko');
-            return null;
+            return { name: a.name, failed: true };
           }
           const tA = performance.now();
           const ms = () => `${a.ms != null ? `lien ${a.ms} ms, ` : ''}fiche ${msTxt(tA)}`;
@@ -786,41 +828,95 @@
             if (!r.ok) throw new Error(`erreur ${r.status}`);
             const manifest = await r.json();
             line(`${a.name} : prêt · ${ms()}`, 'ok');
-            return { transportUrl: a.url, transportName: '', manifest, flags: {} };
+            return { ...a, obj: { transportUrl: a.url, transportName: '', manifest, flags: {} } };
           } catch (err) {
             line(`${a.name} : ne répond pas en ce moment, sauté (${err.name === 'TimeoutError' ? 'trop lent' : err.message}) · ${ms()}`, 'ko');
-            return null;
+            return { ...a, failed: true };
           }
-        }));
-        const ours = fetched.filter(Boolean);
-        if (!ours.length) throw new Error('aucun addon n’a répondu');
+        };
+        const results = await Promise.all([...fixed, ...links.addons].map(fetchOne));
+        const got = results.filter((a) => !a.failed);
+        if (!got.length) throw new Error('aucun addon n’a répondu');
 
-        const isTmdb = (a) => [TMDB_FR, TMDB_FR_SANS_NOTES, TMDB_COLLECTIONS, catfr && `${catfr}/manifest.json`].includes(a.transportUrl);
-        const isCinemeta = (a) => platform === 'nuvio' && a.transportUrl === CINEMETA;
-        const ourUrls = new Set(ours.map((a) => a.transportUrl));
-        // Même lot d'addons sur chaque profil ; « garder mes addons » s'applique à chacun séparément
+        // Profil d'enfant (Nuvio) : Catalogue FR « Famille » à son âge, à la place des fiches ; un même âge = un même lien
+        const kidFor = async (age) => {
+          const base = catfrUrl({ ...CATFR_ENFANTS, f: age }, gemini);
+          const kid = await fetchOne({ name: 'Catalogue FR', url: `${base}/manifest.json` });
+          return kid.failed ? null : { ...kid, base };
+        };
+        const kids = new Map();
+        for (const age of new Set(targets.map((t) => t.age).filter(Boolean))) kids.set(age, await kidFor(age));
+        for (const t of targets) t.kid = t.age ? kids.get(t.age) : undefined;
+
+        // Écrit la liste sur chaque profil ; resservira tel quel pour « Réessayer » (got aura grandi)
+        const FICHES = ['Catalogue FR', 'TMDB (français)', 'TMDB Collections'];
+        const write = async () => {
+          for (const t of targets) {
+            if (t.kid === null) {
+              line(`Profil ${t.name} : le Catalogue FR Enfants ne répond pas, profil pas modifié.`, 'ko');
+              continue;
+            }
+            // Enfant : ses fiches à lui, ni sagas (horreur comprise) ni rangées Jeunesse en double
+            const mineT = t.kid ? [t.kid, ...got.filter((a) => !FICHES.includes(a.name) && a.name !== 'Catalogue FR Jeunesse')] : got;
+            const ours = [...mineT].sort((a, b) => rank(a) - rank(b));
+            const head = new Set(ours.filter((a) => FICHES.includes(a.name)).map((a) => a.url));
+            const isTmdb = (a) => head.has(a.transportUrl);
+            const isCinemeta = (a) => platform === 'nuvio' && a.transportUrl === CINEMETA;
+            const objs = ours.map((a) => a.obj);
+            const tSend = performance.now();
+            const current = await api.get(token, t.id);
+            const key = `${platform}|${authKey || email}|${t.id}`;
+            if (!before.has(key)) before.set(key, current);
+            // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
+            const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
+            const urls = new Set([...pinned, ...objs].map((a) => a.transportUrl));
+            const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
+            await api.set(token, [...objs.filter(isTmdb), ...pinned, ...objs.filter((a) => !isTmdb(a) && !isCinemeta(a)), ...kept, ...objs.filter(isCinemeta)], t.id);
+            if (!undo.written.some((w) => w.key === key)) undo.written.push({ id: t.id, name: t.name, key });
+            const who = t.name ? ` (profil ${t.name}${t.kid ? ', accueil enfant' : ''})` : '';
+            line(`Envoi à l’appli${who} : ${msTxt(tSend)}`, t.name ? 'ok' : '');
+            // Collections, accueil et affiches du Catalogue FR : une fois par profil, dès que son catalogue est là
+            const cat = t.kid || ours.find((a) => a.name === 'Catalogue FR');
+            if (platform === 'nuvio' && cat && !t.extrasDone) {
+              const was = await catfrExtras(token, t.id, t.kid ? t.kid.base : catfr, who);
+              t.extrasDone = true;
+              if (!before.has(`${key}|catfr`)) before.set(`${key}|catfr`, was);
+            }
+          }
+        };
         undo = { api, token, written: [] };
-        for (const t of targets) {
-          const tSend = performance.now();
-          const current = await api.get(token, t.id);
-          const key = `${platform}|${authKey || email}|${t.id}`;
-          if (!before.has(key)) before.set(key, current);
-          // Stremio : Cinemeta et les addons protégés restent juste derrière TMDB, sinon l'appli perd ses fiches de base
-          const pinned = platform === 'stremio' ? current.filter((a) => a.flags?.protected || a.flags?.official) : [];
-          const urls = new Set([...pinned, ...ours].map((a) => a.transportUrl));
-          const kept = form.keep.checked ? current.filter((a) => !urls.has(a.transportUrl)) : [];
-          await api.set(token, [...ours.filter(isTmdb), ...pinned, ...ours.filter((a) => !isTmdb(a) && !isCinemeta(a)), ...kept, ...ours.filter(isCinemeta)], t.id);
-          undo.written.push({ id: t.id, name: t.name, key });
-          line(`Envoi à l’appli${t.name ? ` (profil ${t.name})` : ''} : ${msTxt(tSend)}`, t.name ? 'ok' : '');
-          if (catfr && ourUrls.has(`${catfr}/manifest.json`)) {
-            const was = await catfrExtras(token, t.id, catfr, t.name ? ` (profil ${t.name})` : '');
-            if (!before.has(`${key}|catfr`)) before.set(`${key}|catfr`, was);
+        await write();
+        const done = () => {
+          showAccounts(got);
+          const failed = results.filter((a) => a.failed).length + targets.filter((t) => t.kid === null).length;
+          retryBox.hidden = !failed;
+          if (failed) {
+            document.getElementById('retry-btn').textContent = failed > 1 ? `Réessayer les ${failed} addons sautés` : 'Réessayer l’addon sauté';
+            line('Un addon sauté ? Souvent une panne passagère chez lui. Si AllDebrid t’a envoyé une demande d’autorisation (e-mail ou notification), accepte-la d’abord. Puis clique sur « Réessayer » : seuls les addons sautés sont refaits, le reste ne bouge pas.', 'wait');
           }
-        }
+          line(`Terminé : ${got.length} addon${got.length > 1 ? 's' : ''} installé${got.length > 1 ? 's' : ''}.`, 'ok done');
+          line('Ferme complètement ton appli puis rouvre-la. Les addons peuvent mettre de quelques secondes à une ou deux minutes à apparaître (le temps que l’appli relise ton compte et remplisse l’accueil).', 'wait');
+        };
+        done();
 
-        showAccounts(links.addons.filter((a) => ourUrls.has(a.url)));
-        line(`Terminé : ${ours.length} addon${ours.length > 1 ? 's' : ''} installé${ours.length > 1 ? 's' : ''}.`, 'ok done');
-        line('Ferme complètement ton appli puis rouvre-la. Les addons peuvent mettre de quelques secondes à une ou deux minutes à apparaître (le temps que l’appli relise ton compte et remplisse l’accueil).', 'wait');
+        // Réessayer : un lien déjà fait est seulement relu ; sans lien, le serveur le refait (sans recompter l'installation)
+        retry = async () => {
+          const again = results.filter((a) => a.failed);
+          const toBuild = again.filter((a) => !a.url).map((a) => a.name);
+          const fresh = again.filter((a) => a.url).map(({ name, url, account }) => ({ name, url, account }));
+          if (toBuild.length) {
+            const l = await postJson('/api/liens', { ...body, retry: true, skip: ADDONS.map(idOf).filter((id) => !toBuild.includes(id)) });
+            fresh.push(...l.addons);
+          }
+          const now = await Promise.all(fresh.map(fetchOne));
+          for (const a of again) results.splice(results.indexOf(a), 1);
+          results.push(...now);
+          got.push(...now.filter((a) => !a.failed));
+          // Un enfant dont le catalogue manquait : on retente aussi le sien
+          for (const t of targets.filter((x) => x.kid === null)) t.kid = await kidFor(t.age);
+          await write();
+          done();
+        };
       } catch (err) {
         line(`Échec : ${err.message}. Vérifie tes identifiants puis réessaie.`, 'ko');
       } finally {
@@ -829,6 +925,22 @@
         undoBox.hidden = !undo?.written.length;
         updateSummary();
       }
+    });
+
+    document.getElementById('retry-btn').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      btn.disabled = true;
+      retryBox.hidden = true;
+      line('Nouvel essai pour les addons sautés…');
+      try {
+        await retry();
+      } catch (err) {
+        line(`Échec du nouvel essai : ${err.message}.`, 'ko');
+        retryBox.hidden = false;
+      }
+      e.target.disabled = false;
+      btn.disabled = false;
+      undoBox.hidden = !undo?.written.length;
     });
 
     // Remet la liste d'avant telle quelle (Stremio : objets complets ; Nuvio : liens, noms, activé ou non)

@@ -10,7 +10,7 @@ const fail = (error) => Response.json({ error }, { status: 400 });
 
 export async function onRequestPost({ request, env, waitUntil }) {
   if (await tooMany(env.DB, request.headers.get('CF-Connecting-IP'))) return Response.json({ error: TROP }, { status: 429 });
-  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [], notes = true } = await request.json().catch(() => ({}));
+  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [], notes = true, sans4k = false, retry = false } = await request.json().catch(() => ({}));
 
   const debrid = Object.entries({ alldebrid, torbox }).filter(([, key]) => key);
   if (!debrid.length) return fail('il faut au moins une clé AllDebrid ou TorBox');
@@ -33,8 +33,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const problem = await checkDebrid(service, key);
     if (problem) return fail(problem);
   }
-  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip, notes: notes !== false });
+  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip, notes: notes !== false, sans4k: sans4k === true });
   // Compté ici (clé debrid déjà vérifiée) : impossible de gonfler le chiffre sans vraie clé
-  if (env.DB) waitUntil(compter(env.DB, env.COMPTEUR).catch((err) => console.error('compteur :', err.message)));
+  // « Réessayer » un addon sauté = même installation, pas comptée deux fois
+  if (env.DB && retry !== true) waitUntil(compter(env.DB, env.COMPTEUR).catch((err) => console.error('compteur :', err.message)));
   return Response.json({ addons });
 }
