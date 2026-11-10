@@ -484,7 +484,7 @@
           await rpc('sync_push_profile_settings_blob', { p_platform: platform, p_settings_json: { ...s, features } });
           done.push(name);
         }
-        if (!done.length) throw new Error('aucun appareil n’a encore ouvert Nuvio avec ce compte : ouvre Nuvio une fois connecté, puis repasse ici');
+        if (!done.length) throw new Error('aucun appareil n’a encore ouvert ce profil dans Nuvio : ouvre-le une fois, puis repasse ici (tes addons, eux, sont déjà installés)');
         return done.join(', ');
       });
       return was;
