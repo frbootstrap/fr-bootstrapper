@@ -4,10 +4,11 @@ const assert = require('node:assert');
 const { buildLinks, tmdbKeys } = require('../lib/addons');
 
 const sent = [];
-global.fetch = async (url, opt) => {
+const offline = async (url, opt) => {
   sent.push([String(url), opt && opt.body]);
   throw new Error('hors ligne (test)');
 };
+global.fetch = offline;
 const names = async (input) => (await buildLinks(input)).map((a) => a.name);
 // Faux jeton TMDB v4 : seul le champ aud (clé v3) compte
 const TMDB = `x.${Buffer.from(JSON.stringify({ aud: 'a'.repeat(32) })).toString('base64url')}.y`;
@@ -75,4 +76,37 @@ test('notes sur les affiches : clé RPDB seulement si la case est cochée', asyn
   const anime = async (input) => (await buildLinks({ alldebrid: 'ADKEY12345', ...input })).find((a) => a.name === 'Anime Catalogs').url;
   assert(decodeURIComponent(await anime({})).includes('rpdbkey'));
   assert(!decodeURIComponent(await anime({ notes: false })).includes('rpdbkey'));
+});
+
+test('pas de 4K : chaque addon qui sait filtrer reçoit le filtre', async () => {
+  global.fetch = offline; // un test plus haut le remplace
+  sent.length = 0;
+  const links = await buildLinks({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, trackers: { tr4ker: 'TRK123456' }, qualite: 'sans4k' });
+  const by = Object.fromEntries(links.map((a) => [a.name, a]));
+  const dec = (u) => JSON.parse(Buffer.from(u.split('/')[3], 'base64').toString());
+  assert.match(by.Torrentio.url, /\/qualityfilter=4k\|/);
+  assert.deepStrictEqual(dec(by.TorrentsDB.url).qualityfilter, ['4k']);
+  assert.strictEqual(dec(by.Comet.url).resolutions.r2160p, false);
+  assert.strictEqual(dec(by['UwU-FR'].url).exc_4k, true);
+  const body = (host) => { const hit = sent.find(([u]) => u.includes(host)); assert(hit, `pas d'appel à ${host} : ${sent.map(([u]) => u).join(' ')}`); return JSON.parse(hit[1]); };
+  assert.deepStrictEqual(body('mylumio').payload.res, [1, 2, 3, 4]);
+  assert(!body('wacustom').config.resolutions.includes('2160p'));
+  // Sans la case : rien ne change
+  const plain = Object.fromEntries((await buildLinks({ alldebrid: 'ADKEY12345' })).map((a) => [a.name, a]));
+  assert(!plain.Torrentio.url.includes('qualityfilter') && !dec(plain.Comet.url).resolutions);
+});
+
+test('720p : ni 4K ni 1080p chez ceux qui savent filtrer', async () => {
+  global.fetch = offline;
+  sent.length = 0;
+  const links = await buildLinks({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, qualite: '720p' });
+  const by = Object.fromEntries(links.map((a) => [a.name, a]));
+  const dec = (u) => JSON.parse(Buffer.from(u.split('/')[3], 'base64').toString());
+  assert.match(by.Torrentio.url, /\/qualityfilter=4k,1080p\|/);
+  assert.deepStrictEqual(dec(by.TorrentsDB.url).qualityfilter, ['4k', '1080p']);
+  assert.strictEqual(dec(by.Comet.url).resolutions.r1080p, false);
+  assert.strictEqual(dec(by['UwU-FR'].url).exc_1080p, true);
+  const body = (host) => JSON.parse(sent.find(([u]) => u.includes(host))[1]);
+  assert.deepStrictEqual(body('mylumio').payload.res, [1, 2]);
+  assert.deepStrictEqual(body('wacustom').config.resolutions, ['720p', '480p', 'Unknown']);
 });

@@ -281,3 +281,17 @@ footer { max-width: 1280px; margin: 0 auto; padding: calc(var(--u) * 4) calc(var
 .profiles li.off { color: var(--dim); }
 .profiles li.off label { cursor: default; }
 .profiles li small { font-size: 13px; font-weight: 700; color: var(--dim); }
+.profiles li { flex-wrap: wrap; }
+.profiles li select, .kid-new select {
+  height: 44px;
+  padding: 0 10px;
+  border-radius: var(--r-field);
+  border: 2px solid transparent;
+  background: var(--surface2);
+  color: var(--text);
+  font: 600 14px Figtree, system-ui, sans-serif;
+}
+.profiles li select:focus, .kid-new select:focus { outline: none; border-color: var(--accent); }
+.kid-new { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.kid-new[hidden], .kid-new .row[hidden] { display: none; }
+.kid-new select { height: 56px; }
