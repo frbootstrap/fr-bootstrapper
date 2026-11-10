@@ -3,9 +3,11 @@ import { handle, readConfig } from '../../lib/jeunesse.js';
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' };
 
-export async function onRequestGet({ request, params, waitUntil }) {
+export async function onRequestGet({ request, params, env, waitUntil }) {
   const path = (params.path || []).join('/');
   const [conf, ...rest] = path.split('/');
+  // /jeunesse et l'engrenage « Configurer » de Stremio (…/configure) : la page de réglage
+  if (!conf || conf === 'configure' || rest[0] === 'configure') return env.ASSETS.fetch(new Request(new URL('/jeunesse-config', request.url)));
   const cfg = readConfig(decodeURIComponent(conf || ''));
   // Mise en cache SANS le jeton de la personne : une rangée est la même pour tous les enfants du même âge, une fiche pour tous
   const shared = cfg && rest[0] !== 'manifest.json'

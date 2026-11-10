@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jeunesse FR</title>
+  <meta name="description" content="Addon Stremio et Nuvio : films et séries pour enfants, en français, filtrés par âge." />
+  <link rel="icon" type="image/png" href="/icon-512-fusee.png" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .seul { grid-template-columns: minmax(0, 1fr); max-width: 860px; }
+    .seul form.card { min-height: 0; }
+    .lien { padding: 16px 18px; border-radius: var(--r-field); background: var(--surface2); font-size: 14px; }
+    .actions { display: flex; flex-wrap: wrap; gap: var(--u); }
+    .actions .btn { flex: 1 1 220px; min-height: 52px; }
+    .steps { margin: 0; padding-left: 20px; color: var(--dim); }
+    .steps li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" style="color: inherit">
+      <img src="/icon-512-fusee.png" width="34" height="34" alt="" />
+      <span>FR Bootstrapper</span>
+    </a>
+  </header>
+
+  <main class="layout seul">
+    <form class="card" id="f" novalidate>
+      <p class="kicker">Addon Stremio et Nuvio</p>
+      <h1>Jeunesse FR</h1>
+      <p class="lead">Des films et des séries pour enfants, en français : rangées d’accueil, recherche et fiches avec les épisodes. Seuls les titres classés officiellement sous l’âge choisi apparaissent.</p>
+
+      <div class="unlocks">
+        <div><strong>Filtré par âge</strong><span>Classification française, sinon américaine. Un titre sans classification est écarté, comme l’horreur, et la guerre jusqu’à 12 ans.</span></div>
+        <div><strong>Recherche verrouillée</strong><span>Chaque résultat est vérifié avant d’être montré : « Saw » ou « South Park » ne renvoient rien.</span></div>
+      </div>
+
+      <div class="field">
+        <label for="tmdb">Ta clé TMDB (jeton d’accès en lecture)</label>
+        <div class="row">
+          <input id="tmdb" type="text" spellcheck="false" autocomplete="off" placeholder="eyJ…" />
+          <button class="btn" type="button" id="check">Vérifier</button>
+        </div>
+        <p class="form-hint" id="hint">Gratuite, en 3 étapes ci-dessous. Elle sert seulement à demander les titres à TMDB et reste dans ton lien : rien n’est gardé chez nous.</p>
+      </div>
+      <details class="more">
+        <summary>Comment avoir ma clé TMDB&nbsp;?</summary>
+        <ol class="steps">
+          <li>Crée un compte gratuit sur <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a>.</li>
+          <li>Va sur <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Paramètres → API</a> et demande une clé (usage personnel).</li>
+          <li>Copie le « jeton d’accès en lecture de l’API », le plus long des deux (il commence par eyJ).</li>
+        </ol>
+      </details>
+
+      <fieldset class="choice">
+        <legend>Pour quel âge&nbsp;?</legend>
+        <label class="chip"><input type="radio" name="age" value="7" /> Moins de 7 ans</label>
+        <label class="chip"><input type="radio" name="age" value="10" checked /> Moins de 10 ans</label>
+        <label class="chip"><input type="radio" name="age" value="12" /> Moins de 12 ans</label>
+        <label class="chip"><input type="radio" name="age" value="16" /> Moins de 16 ans</label>
+      </fieldset>
+
+      <div class="field">
+        <label>Ton lien d’installation</label>
+        <div class="lien secret" id="lien">Colle d’abord ta clé TMDB.</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" id="stremio" href="#" aria-disabled="true">Installer dans Stremio</a>
+        <button class="btn" type="button" id="copy" disabled>Copier le lien (Nuvio, autres)</button>
+      </div>
+      <p class="form-hint">Sur Nuvio : Réglages → Addons → colle le lien. Pour un vrai profil enfant sur Nuvio (accueil arrangé, collections Genres, Studios et Chaînes, sans aucun autre catalogue), passe plutôt par le <a href="/">FR Bootstrapper</a> : il crée le profil et installe tout d’un coup.</p>
+      <p class="form-hint">Les liens vidéo viennent de tes autres addons (Torrentio, Lumio…) : Jeunesse FR ne fournit que les fiches. Sur un profil où d’autres addons ont leurs propres catalogues ou leur recherche, ceux-là ne sont pas filtrés.</p>
+    </form>
+  </main>
+
+  <footer>Cette page n’héberge aucun contenu. Données des films et séries : TMDB. Code public, aucune donnée gardée.</footer>
+
+  <script>
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const form = $('f');
+    const b64url = (o) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const ok = (t) => /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(t);
+    let url = '';
+
+    function update() {
+      const t = $('tmdb').value.trim();
+      url = ok(t) ? `${location.origin}/jeunesse/${b64url({ t, a: +form.age.value })}/manifest.json` : '';
+      $('lien').textContent = url || (t ? 'Ce n’est pas un jeton de lecture TMDB : il faut le long, qui commence par eyJ.' : 'Colle d’abord ta clé TMDB.');
+      $('stremio').href = url ? url.replace(/^https:/, 'stremio:') : '#';
+      $('stremio').setAttribute('aria-disabled', String(!url));
+      $('copy').disabled = !url;
+    }
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    form.addEventListener('submit', (e) => e.preventDefault());
+    $('stremio').addEventListener('click', (e) => { if (!url) e.preventDefault(); });
+
+    $('copy').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(url); $('copy').textContent = '✓ Lien copié'; } catch { $('copy').textContent = 'Sélectionne le lien et copie-le'; }
+      setTimeout(() => { $('copy').textContent = 'Copier le lien (Nuvio, autres)'; }, 3000);
+    });
+
+    // Le jeton se vérifie depuis le navigateur : il ne part que chez TMDB
+    $('check').addEventListener('click', async () => {
+      const t = $('tmdb').value.trim();
+      const hint = $('hint');
+      if (!t) return void (hint.textContent = '✗ Colle d’abord ta clé.');
+      const r = await fetch('https://api.themoviedb.org/3/authentication', { headers: { Authorization: `Bearer ${t}` } }).catch(() => null);
+      hint.textContent = r?.ok ? '✓ Clé acceptée.' : r?.status === 401 ? '✗ TMDB refuse ce jeton : copie le « jeton d’accès en lecture », le long qui commence par eyJ.' : '? TMDB ne répond pas pour l’instant, impossible de vérifier.';
+      hint.style.color = r?.ok ? 'var(--ok)' : r?.status === 401 ? 'var(--danger)' : '';
+    });
+    update();
+  })();
+  </script>
+</body>
+</html>
