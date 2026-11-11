@@ -89,14 +89,13 @@ test('pas de 4K : chaque addon qui sait filtrer reçoit le filtre', async () => 
   assert(!dec(plain.Comet.url).resolutions && dec(plain['UwU-FR'].url).exc_cam === true);
 });
 
-test('720p seul, CAM gardés, cache seulement', async () => {
+test('720p seul, CAM gardés', async () => {
   global.fetch = offline;
   sent.length = 0;
-  const links = await buildLinks({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, qualite: { res: ['720p'], cam: false, cache: true } });
+  const links = await buildLinks({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, qualite: { res: ['720p'], cam: false } });
   const by = Object.fromEntries(links.map((a) => [a.name, a]));
   const dec = (u) => JSON.parse(Buffer.from(u.split('/')[3], 'base64').toString());
-  assert.match(by.Torrentio.url, /\/qualityfilter=4k,1080p,480p\|debridoptions=nocatalog,nodownloadlinks\|/);
-  assert.deepStrictEqual(dec(by.TorrentsDB.url).debridoptions, ['nocatalog']); // secours : jamais filtré sur le cache
+  assert.match(by.Torrentio.url, /\/qualityfilter=4k,1080p,480p\|debridoptions=nocatalog\|/);
   assert.strictEqual(dec(by.Comet.url).resolutions.r1080p, false);
   assert.strictEqual(dec(by.Comet.url).resolutions.r720p, undefined);
   assert.strictEqual(dec(by['UwU-FR'].url).exc_1080p, true);
