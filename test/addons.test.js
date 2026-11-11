@@ -15,7 +15,7 @@ const TMDB = `x.${Buffer.from(JSON.stringify({ aud: 'a'.repeat(32) })).toString(
 
 test('debrid seul : ni Stream-Fusion, ni WaCustom', async () => {
   const n = await names({ alldebrid: 'ADKEY12345' });
-  assert.deepStrictEqual(n, ['Lumio', 'AIOSources', 'UwU-FR', 'Torrentio', 'Comet', 'TorrentsDB', 'Anime Catalogs', 'SubSense', 'OpenSubtitles v3+', 'FKStream']);
+  assert.deepStrictEqual(n, ['Lumio', 'UwU-FR', 'Torrentio', 'Comet', 'TorrentsDB', 'Anime Catalogs', 'SubSense', 'OpenSubtitles v3+', 'FKStream']);
 });
 
 test('TMDB seul : WaCustom en plus, pas Stream-Fusion', async () => {
@@ -42,14 +42,6 @@ test('« j’ai déjà un compte » : on reprend le lien sans rien créer', asyn
   const links = await buildLinks({ alldebrid: 'ADKEY12345', mine: { lumio: 'https://mylumio.tv/x/manifest.json', wacustom: 'https://wacustom.nipva.com/y/manifest.json' } });
   assert.strictEqual(links.find((a) => a.name === 'WaCustom').url, 'https://wacustom.nipva.com/y/manifest.json');
   assert(!sent.some(([u]) => u.includes('mylumio') || u.includes('wacustom')));
-});
-
-test('AIOSources : liens en cache seulement, jamais de téléchargement direct', async () => {
-  sent.length = 0;
-  await buildLinks({ alldebrid: 'ADKEY12345', torbox: 'TBKEY12345' });
-  const body = JSON.parse(sent.find(([u]) => u.includes('aiosources'))[1]);
-  assert.strictEqual(body.preferences.cached_only, true);
-  assert.deepStrictEqual(body.preferences.services, ['alldebrid', 'torbox']);
 });
 
 test('addons décochés : ni lien ni compte créé', async () => {

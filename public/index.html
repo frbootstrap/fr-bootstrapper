@@ -220,7 +220,7 @@
           <label class="chip"><input type="checkbox" name="res" value="720p" checked /> 720p</label>
           <label class="chip"><input type="checkbox" name="res" value="480p" checked /> 480p et moins</label>
         </fieldset>
-        <p class="form-hint kid-hide-cat">Décoche ce que tu ne veux pas voir. Sans la 4K, les liens Full HD arrivent tout de suite, sans dérouler une liste de 4K. En gardant seulement 720p, les fichiers sont bien plus légers : pour une petite connexion qui coupe en Full HD. AIOSources et FKStream ne savent pas filtrer la résolution : chez eux, tout peut encore apparaître.</p>
+        <p class="form-hint kid-hide-cat">Décoche ce que tu ne veux pas voir. Sans la 4K, les liens Full HD arrivent tout de suite, sans dérouler une liste de 4K. En gardant seulement 720p, les fichiers sont bien plus légers : pour une petite connexion qui coupe en Full HD. FKStream ne sait pas filtrer la résolution : chez lui, tout peut encore apparaître.</p>
         <label class="check kid-hide-cat"><input type="checkbox" name="cam" checked /> Écarter les CAM et TS (films filmés en salle, image et son mauvais)</label>
         <label class="check kid-hide-cat"><input type="checkbox" name="cache" /> Seulement les fichiers en cache (lecture immédiate)</label>
         <p class="form-hint kid-hide-cat">Un fichier « en cache » est déjà chez AllDebrid ou TorBox : il se lance tout de suite. Les autres doivent d’abord être téléchargés par eux (de quelques secondes à plusieurs minutes, parfois jamais). Comet et UwU-FR ne montrent déjà que ceux-là ; la case agit sur Torrentio et TorrentsDB. Moins de liens, surtout pour les films rares.</p>
@@ -791,7 +791,6 @@
       { name: 'Fiches en français', id: 'TMDB (français)', note: 'titres, résumés', ok: (k) => k.meta, need: 'Cinemeta choisi', free: true },
       { name: 'Collections', id: 'TMDB Collections', note: 'sagas', ok: () => true, free: true },
       { name: 'Lumio', ok: (k) => k.debrid },
-      { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
       { name: 'WaCustom', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wacustom), need: '+ clé TMDB', tmdb: true },
       { name: 'UwU-FR', note: 'animés', ok: (k) => k.debrid },
