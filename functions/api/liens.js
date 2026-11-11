@@ -1,5 +1,5 @@
 // Fabrique les liens d'addons. Rien n'est enregistré : les clés servent le temps de la requête.
-import { buildLinks, checkDebrid, tmdbKeys, TRACKERS } from '../../lib/addons.js';
+import { buildLinks, checkDebrid, tmdbKeys, TRACKERS, readQualite } from '../../lib/addons.js';
 import { tooMany, TROP } from '../../lib/limite.js';
 import { compter } from '../../lib/compteur.js';
 
@@ -10,7 +10,7 @@ const fail = (error) => Response.json({ error }, { status: 400 });
 
 export async function onRequestPost({ request, env, waitUntil }) {
   if (await tooMany(env.DB, request.headers.get('CF-Connecting-IP'))) return Response.json({ error: TROP }, { status: 429 });
-  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [], notes = true, qualite = '', retry = false } = await request.json().catch(() => ({}));
+  const { alldebrid, torbox, tmdb, trackers = {}, mine = {}, skip = [], notes = true, qualite = {}, retry = false } = await request.json().catch(() => ({}));
 
   const debrid = Object.entries({ alldebrid, torbox }).filter(([, key]) => key);
   if (!debrid.length) return fail('il faut au moins une clé AllDebrid ou TorBox');
@@ -18,7 +18,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (!isKey(key)) return fail(`clé ${NAMES[service]} invalide (copie-la en entier, sans espace)`);
   }
   if (tmdb && !tmdbKeys(tmdb)) return fail('jeton TMDB invalide : copie le « jeton d’accès en lecture », pas la clé courte');
-  if (typeof trackers !== 'object' || typeof mine !== 'object') return fail('requête invalide');
+  if (typeof trackers !== 'object' || typeof mine !== 'object' || typeof qualite !== 'object' || !qualite) return fail('requête invalide');
+  if (!readQualite(qualite)) return fail('coche au moins une résolution');
   if (!Array.isArray(skip) || skip.some((s) => typeof s !== 'string')) return fail('requête invalide');
   for (const [name, key] of Object.entries(trackers)) {
     if (!TRACKERS[name] || (key && !isKey(key))) return fail(`clé ${name} invalide (copie-la en entier, sans espace)`);
@@ -33,7 +34,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const problem = await checkDebrid(service, key);
     if (problem) return fail(problem);
   }
-  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip, notes: notes !== false, qualite: ['sans4k', '720p'].includes(qualite) ? qualite : '' });
+  const addons = await buildLinks({ alldebrid, torbox, tmdbToken: tmdb, trackers, mine, skip, notes: notes !== false, qualite });
   // Compté ici (clé debrid déjà vérifiée) : impossible de gonfler le chiffre sans vraie clé
   // « Réessayer » un addon sauté = même installation, pas comptée deux fois
   if (env.DB && retry !== true) waitUntil(compter(env.DB, env.COMPTEUR).catch((err) => console.error('compteur :', err.message)));
