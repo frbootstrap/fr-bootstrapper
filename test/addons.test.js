@@ -96,7 +96,7 @@ test('720p seul, CAM gardés, cache seulement', async () => {
   const by = Object.fromEntries(links.map((a) => [a.name, a]));
   const dec = (u) => JSON.parse(Buffer.from(u.split('/')[3], 'base64').toString());
   assert.match(by.Torrentio.url, /\/qualityfilter=4k,1080p,480p\|debridoptions=nocatalog,nodownloadlinks\|/);
-  assert.deepStrictEqual(dec(by.TorrentsDB.url).debridoptions, ['nocatalog', 'nodownloadlinks']);
+  assert.deepStrictEqual(dec(by.TorrentsDB.url).debridoptions, ['nocatalog']); // secours : jamais filtré sur le cache
   assert.strictEqual(dec(by.Comet.url).resolutions.r1080p, false);
   assert.strictEqual(dec(by.Comet.url).resolutions.r720p, undefined);
   assert.strictEqual(dec(by['UwU-FR'].url).exc_1080p, true);
