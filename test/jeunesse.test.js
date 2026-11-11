@@ -8,9 +8,11 @@ const film = (fr, us, genres = []) => ({
   release_dates: { results: [...(fr ? [{ iso_3166_1: 'FR', release_dates: [{ certification: fr }] }] : []), ...(us ? [{ iso_3166_1: 'US', release_dates: [{ certification: us }] }] : [])] },
 });
 
-test('classification : la française d’abord, sinon l’américaine, sinon rien', () => {
-  assert.strictEqual(rating([{ c: 'US', r: 'R' }, { c: 'FR', r: '12' }]), 12);
-  assert.strictEqual(rating([{ c: 'US', r: 'PG' }]), 8);
+test('classification : la plus sévère de la française et de l’américaine, sinon rien', () => {
+  assert.strictEqual(rating([{ c: 'US', r: 'R' }, { c: 'FR', r: '12' }]), 17);
+  assert.strictEqual(rating([{ c: 'US', r: 'PG' }]), 0);
+  assert.strictEqual(isKidSafe(film('TP', 'PG-13'), 12, 'movie'), false); // Avengers : TP en France, PG-13 aux USA
+  assert.strictEqual(isKidSafe(film('TP', 'PG'), 7, 'movie'), true); // La Reine des neiges
   assert.strictEqual(rating([{ c: 'DE', r: '6' }]), null);
 });
 
