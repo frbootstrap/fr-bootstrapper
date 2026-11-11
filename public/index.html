@@ -20,7 +20,7 @@
       <button type="button" data-goto="appli"><span class="tab-state" aria-hidden="true"></span>Ton appli</button>
       <button type="button" data-goto="debrid"><span class="tab-state" aria-hidden="true"></span>Ta clé debrid</button>
       <button type="button" data-goto="tmdb"><span class="tab-state" aria-hidden="true"></span>Ta clé TMDB</button>
-      <button type="button" data-goto="trackers" class="adulte-only"><span class="tab-state" aria-hidden="true"></span>Tes trackers</button>
+      <button type="button" data-goto="trackers"><span class="tab-state" aria-hidden="true"></span>Tes trackers</button>
       <button type="button" data-goto="enfant" class="enfant-only"><span class="tab-state" aria-hidden="true"></span>Ton enfant</button>
       <button type="button" data-goto="installer"><span class="tab-state" aria-hidden="true"></span>Installer</button>
     </nav>
@@ -145,7 +145,7 @@
         </div>
       </section>
 
-      <section class="step adulte-only" data-step="trackers" hidden>
+      <section class="step" data-step="trackers" hidden>
         <p class="kicker">Gratuit · fortement conseillé</p>
         <h1>Tes trackers</h1>
         <p class="lead">Un tracker, c’est un site communautaire qui répertorie des torrents, souvent en VF. Avec un compte, tu donnes aux addons accès à son catalogue : beaucoup plus de résultats en français. Inscris-toi, puis copie ta clé API ici.</p>
@@ -223,7 +223,7 @@
         <label class="check adulte-only"><input type="checkbox" name="notes" checked /> Afficher les notes des films et séries sur les affiches</label>
         <p class="form-hint adulte-only">Un petit bandeau avec les notes (IMDb, Rotten Tomatoes…) apparaît en bas de chaque affiche dans les catalogues. Décoche si tu préfères les affiches toutes simples.</p>
         <label class="check adulte-only"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
-        <details class="more adulte-only">
+        <details class="more">
           <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion&nbsp;?</summary>
           <p class="form-hint">Colle ton lien d’installation (il finit par /manifest.json). Sinon, laisse vide : on te les configure automatiquement.</p>
           <div class="field"><label for="mine_lumio">Lumio</label><input id="mine_lumio" type="url" name="mine_lumio" spellcheck="false" placeholder="https://…/manifest.json" /></div>
@@ -725,7 +725,7 @@
 
     // Onglets libres : on va où on veut, chaque onglet montre s'il est rempli (vert) ou s'il manque l'obligatoire (rouge)
     const allSteps = [...form.querySelectorAll('.step')];
-    const STEPS = { adulte: ['appli', 'debrid', 'tmdb', 'trackers', 'installer'], enfant: ['appli', 'debrid', 'tmdb', 'enfant', 'installer'] };
+    const STEPS = { adulte: ['appli', 'debrid', 'tmdb', 'trackers', 'installer'], enfant: ['appli', 'debrid', 'tmdb', 'trackers', 'enfant', 'installer'] };
     const names = () => STEPS[mode] || STEPS.adulte;
     const stepBtns = [...document.querySelectorAll('[data-goto]')];
     const backBtn = document.getElementById('back-btn');

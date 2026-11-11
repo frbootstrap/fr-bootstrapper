@@ -33,6 +33,14 @@ test('listes TMDB : seulement des classifications sous l’âge', () => {
   assert.match(p.without_genres, /27/);
 });
 
+test('dossier de genre : reste dans Famille / Pour les petits', () => {
+  const cat = (id) => CATALOGS.find((c) => c[0] === id);
+  assert.strictEqual(discoverParams(cat('jeunesse-films'), 12, 'Documentaire').with_genres, '99,10751');
+  assert.strictEqual(discoverParams(cat('jeunesse-films'), 12, 'Famille').with_genres, '10751');
+  assert.strictEqual(discoverParams(cat('jeunesse-series'), 12, 'Comédie').with_genres, '35,10762');
+  assert.strictEqual(discoverParams(cat('jeunesse-series'), 12, 'Pour les petits').with_genres, '10762');
+});
+
 test('lien : âge et jeton obligatoires', async () => {
   const ok = Buffer.from(JSON.stringify({ t: 'eyJa.b.c', a: 10 })).toString('base64url');
   assert(readConfig(ok));
