@@ -125,7 +125,7 @@
         <p class="lead adulte-only">TMDB, c’est la grande base de données des films et séries. Certains addons s’en servent pour savoir exactement quel film tu cherches (titre français, année). Sans clé, ils ne peuvent pas marcher.</p>
         <p class="lead enfant-only">TMDB, c’est la grande base de données des films et séries. L’espace enfant s’en sert pour trouver les films, leurs résumés en français et surtout leur classification par âge.</p>
         <div class="unlocks adulte-only">
-          <div><strong>WaCustom</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
+          <div><strong>WaStream</strong><span>Téléchargements directs 1fichier, débridés par AllDebrid ou TorBox.</span></div>
         </div>
         <div class="field">
           <label for="tmdb">Jeton d’accès en lecture TMDB</label>
@@ -226,10 +226,10 @@
         <p class="form-hint adulte-only">Un petit bandeau avec les notes (IMDb, Rotten Tomatoes…) apparaît en bas de chaque affiche dans les catalogues. Décoche si tu préfères les affiches toutes simples.</p>
         <label class="check adulte-only"><input type="checkbox" name="keep" /> Garder aussi les addons que j’ai déjà (sinon ils sont remplacés)</label>
         <details class="more">
-          <summary>Tu as déjà un compte Lumio, WaCustom ou Stream-Fusion&nbsp;?</summary>
+          <summary>Tu as déjà un compte Lumio, WaStream ou Stream-Fusion&nbsp;?</summary>
           <p class="form-hint">Colle ton lien d’installation (il finit par /manifest.json). Sinon, laisse vide : on te les configure automatiquement.</p>
           <div class="field"><label for="mine_lumio">Lumio</label><input id="mine_lumio" type="url" name="mine_lumio" spellcheck="false" placeholder="https://…/manifest.json" /></div>
-          <div class="field"><label for="mine_wacustom">WaCustom</label><input id="mine_wacustom" type="url" name="mine_wacustom" spellcheck="false" placeholder="https://…/manifest.json" /></div>
+          <div class="field"><label for="mine_wastream">WaStream</label><input id="mine_wastream" type="url" name="mine_wastream" spellcheck="false" placeholder="https://…/manifest.json" /></div>
           <div class="field"><label for="mine_streamfusion">Stream-Fusion</label><input id="mine_streamfusion" type="url" name="mine_streamfusion" spellcheck="false" placeholder="https://…/manifest.json" /></div>
         </details>
         <button class="btn btn-primary btn-big" type="submit" id="install-btn">Installer les addons</button>
@@ -323,7 +323,7 @@
     // Âges du profil Jeunesse : seuls les titres classés strictement sous cet âge (voir lib/jeunesse.js)
     const AGES = [[7, 'Enfant · moins de 7 ans'], [10, 'Enfant · moins de 10 ans'], [12, 'Ado · moins de 12 ans'], [16, 'Ado · moins de 16 ans']];
     const b64url = (o) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    // Notre addon, servi par ce site ; le jeton TMDB de la personne est dans le lien (comme pour WaCustom)
+    // Notre addon, servi par ce site ; le jeton TMDB de la personne est dans le lien (comme pour WaStream)
     const jeunesseBase = (tmdb, age) => `${location.origin}/jeunesse/${b64url({ t: tmdb, a: age })}`;
     // Pour Stremio (pas de profils) : 3 rangées seulement sur l'accueil, Dessins animés, Séries pour les enfants, À voir en famille
     const CATFR_JEUNESSE = {
@@ -704,7 +704,7 @@
       return '';
     }
 
-    // Identifiants des comptes créés chez WaCustom / Stream-Fusion : affichés une seule fois
+    // Identifiants des comptes créés chez WaStream / Stream-Fusion : affichés une seule fois
     function showAccounts(addons) {
       const made = addons.filter((a) => a.account);
       accounts.hidden = !made.length;
@@ -791,7 +791,7 @@
       { name: 'Lumio', ok: (k) => k.debrid },
       { name: 'AIOSources', note: 'trackers FR', ok: (k) => k.debrid },
       { name: 'Stream-Fusion', ok: (k) => k.debrid && (k.sf || k.mine.streamfusion), need: '+ clé de tracker' },
-      { name: 'WaCustom', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wacustom), need: '+ clé TMDB', tmdb: true },
+      { name: 'WaStream', note: '1fichier', ok: (k) => k.debrid && (k.tmdb || k.mine.wastream), need: '+ clé TMDB', tmdb: true },
       { name: 'UwU-FR', note: 'animés', ok: (k) => k.debrid },
       { name: 'Torrentio', ok: (k) => k.debrid },
       { name: 'Comet', ok: (k) => k.debrid },
@@ -889,7 +889,7 @@
         tmdb: /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(form.tmdb.value.trim()),
         meta: form.meta.value !== 'cinemeta',
         sf: TRACKERS.some(([id]) => id !== 'nekobt' && has(id)),
-        mine: { wacustom: !!form.mine_wacustom.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
+        mine: { wastream: !!form.mine_wastream.value.trim(), streamfusion: !!form.mine_streamfusion.value.trim() },
       };
       const cat = form.meta.value === 'catfr';
       ADDONS[0].note = cat ? 'Catalogue FR' : 'titres, résumés';
@@ -970,7 +970,7 @@
       const tbKey = form.tbKey.value.trim();
       const tmdb = form.tmdb.value.trim();
       const trackers = Object.fromEntries(TRACKERS.map(([id]) => [id, form[`trk_${id}`].value.trim()]).filter(([, v]) => v));
-      const mine = Object.fromEntries(['lumio', 'wacustom', 'streamfusion'].map((n) => [n, form[`mine_${n}`].value.trim()]).filter(([, v]) => v));
+      const mine = Object.fromEntries(['lumio', 'wastream', 'streamfusion'].map((n) => [n, form[`mine_${n}`].value.trim()]).filter(([, v]) => v));
 
       if (!authKey && (!email || !password)) return line('Il manque ton email ou ton mot de passe.', 'ko');
       if (!form.querySelector('input[name=res]:checked')) return line('Coche au moins une résolution.', 'ko');

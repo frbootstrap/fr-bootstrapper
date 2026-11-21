@@ -13,20 +13,20 @@ const names = async (input) => (await buildLinks(input)).map((a) => a.name);
 // Faux jeton TMDB v4 : seul le champ aud (clé v3) compte
 const TMDB = `x.${Buffer.from(JSON.stringify({ aud: 'a'.repeat(32) })).toString('base64url')}.y`;
 
-test('debrid seul : ni Stream-Fusion, ni WaCustom', async () => {
+test('debrid seul : ni Stream-Fusion, ni WaStream', async () => {
   const n = await names({ alldebrid: 'ADKEY12345' });
   assert.deepStrictEqual(n, ['Lumio', 'AIOSources', 'UwU-FR', 'Torrentio', 'Comet', 'TorrentsDB', 'Anime Catalogs', 'SubSense', 'OpenSubtitles v3+', 'FKStream']);
 });
 
-test('TMDB seul : WaCustom en plus, pas Stream-Fusion', async () => {
+test('TMDB seul : WaStream en plus, pas Stream-Fusion', async () => {
   const n = await names({ alldebrid: 'ADKEY12345', tmdbToken: TMDB });
-  assert(n.includes('WaCustom') && !n.includes('Stream-Fusion'));
+  assert(n.includes('WaStream') && !n.includes('Stream-Fusion'));
 });
 
 test('TMDB + tr4ker : tout, et la clé tr4ker part chez UwU', async () => {
   const links = await buildLinks({ alldebrid: 'ADKEY12345', torbox: 'TBKEY12345', tmdbToken: TMDB, trackers: { tr4ker: 'TRK123456' } });
   const by = Object.fromEntries(links.map((a) => [a.name, a]));
-  assert(by['Stream-Fusion'] && by.WaCustom);
+  assert(by['Stream-Fusion'] && by.WaStream);
   const dec = (u) => JSON.parse(Buffer.from(u.split('/')[3], 'base64').toString());
   assert.strictEqual(dec(by['UwU-FR'].url).tr4ker_key, 'TRK123456');
   assert.match(by.Torrentio.url, /alldebrid=ADKEY12345/);
@@ -39,9 +39,9 @@ test('NekoBT seul : UwU le reçoit, mais pas de Stream-Fusion', async () => {
 
 test('« j’ai déjà un compte » : on reprend le lien sans rien créer', async () => {
   sent.length = 0;
-  const links = await buildLinks({ alldebrid: 'ADKEY12345', mine: { lumio: 'https://mylumio.tv/x/manifest.json', wacustom: 'https://wacustom.nipva.com/y/manifest.json' } });
-  assert.strictEqual(links.find((a) => a.name === 'WaCustom').url, 'https://wacustom.nipva.com/y/manifest.json');
-  assert(!sent.some(([u]) => u.includes('mylumio') || u.includes('wacustom')));
+  const links = await buildLinks({ alldebrid: 'ADKEY12345', mine: { lumio: 'https://mylumio.tv/x/manifest.json', wastream: 'https://wastream.noplay.fr/y/manifest.json' } });
+  assert.strictEqual(links.find((a) => a.name === 'WaStream').url, 'https://wastream.noplay.fr/y/manifest.json');
+  assert(!sent.some(([u]) => u.includes('mylumio') || u.includes('wastream')));
 });
 
 test('AIOSources : liens en cache seulement, jamais de téléchargement direct', async () => {
@@ -54,9 +54,9 @@ test('AIOSources : liens en cache seulement, jamais de téléchargement direct',
 
 test('addons décochés : ni lien ni compte créé', async () => {
   sent.length = 0;
-  const n = await names({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, skip: ['WaCustom', 'Torrentio'] });
-  assert(!n.includes('WaCustom') && !n.includes('Torrentio') && n.includes('Lumio'));
-  assert(!sent.some(([u]) => u.includes('wacustom')));
+  const n = await names({ alldebrid: 'ADKEY12345', tmdbToken: TMDB, skip: ['WaStream', 'Torrentio'] });
+  assert(!n.includes('WaStream') && !n.includes('Torrentio') && n.includes('Lumio'));
+  assert(!sent.some(([u]) => u.includes('wastream')));
 });
 
 test('jeton TMDB invalide refusé', () => {
@@ -90,7 +90,7 @@ test('pas de 4K : chaque addon qui sait filtrer reçoit le filtre', async () => 
   assert.strictEqual(dec(by['UwU-FR'].url).exc_4k, true);
   const body = (host) => { const hit = sent.find(([u]) => u.includes(host)); assert(hit, `pas d'appel à ${host} : ${sent.map(([u]) => u).join(' ')}`); return JSON.parse(hit[1]); };
   assert.deepStrictEqual(body('mylumio').payload.res, [1, 2, 3]);
-  assert(!body('wacustom').config.resolutions.includes('2160p'));
+  assert(!body('wastream').config.resolutions.includes('2160p'));
   // Par défaut : toutes les résolutions, CAM écartés, cache ou non
   const plain = Object.fromEntries((await buildLinks({ alldebrid: 'ADKEY12345' })).map((a) => [a.name, a]));
   assert.match(plain.Torrentio.url, /\/qualityfilter=cam,scr\|debridoptions=nocatalog\|/);
@@ -111,7 +111,7 @@ test('720p seul, CAM gardés', async () => {
   const body = (host) => JSON.parse(sent.find(([u]) => u.includes(host))[1]);
   assert.deepStrictEqual(body('mylumio').payload.res, [2]);
   assert.strictEqual(body('mylumio').payload.cam, 0);
-  assert.deepStrictEqual(body('wacustom').config.resolutions, ['720p']);
+  assert.deepStrictEqual(body('wastream').config.resolutions, ['720p']);
 });
 
 test('qualité : au moins une résolution', () => {

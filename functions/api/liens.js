@@ -25,7 +25,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (!TRACKERS[name] || (key && !isKey(key))) return fail(`clé ${name} invalide (copie-la en entier, sans espace)`);
   }
   for (const [name, url] of Object.entries(mine)) {
-    if (!['lumio', 'wacustom', 'streamfusion'].includes(name) || (url && !isManifest(url))) {
+    if (!['lumio', 'wastream', 'streamfusion'].includes(name) || (url && !isManifest(url))) {
       return fail('un lien « j’ai déjà un compte » doit commencer par https:// et finir par /manifest.json');
     }
   }
